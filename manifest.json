@@ -1,0 +1,24 @@
+{
+  "name": "Instead",
+  "short_name": "Instead",
+  "description": "Your intentional alternative to scrolling",
+  "start_url": "./instead_v2.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5EFE4",
+  "theme_color": "#2D5A40",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
