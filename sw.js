@@ -1,8 +1,8 @@
 // Instead — Service Worker
-// Cache-first strategy: app loads instantly offline,
-// updates silently in the background when online.
+// Navigation requests are network-first so deployed app updates are visible.
+// Static assets remain cache-first for fast offline-friendly loads.
 
-const CACHE_NAME = 'instead-v2';
+const CACHE_NAME = 'instead-v3';
 
 // Files to cache on install (adjust the HTML filename if yours differs)
 const PRECACHE_URLS = [
@@ -37,10 +37,24 @@ self.addEventListener('activate', event => {
   );
 });
 
-// ── Fetch: cache-first, network fallback ──────────────────
+// ── Fetch: network-first shell, cache-first assets ────────
 self.addEventListener('fetch', event => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          if (response && response.status === 200) {
+            caches.open(CACHE_NAME).then(c => c.put('./index.html', response.clone()));
+          }
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request).then(cached => {
