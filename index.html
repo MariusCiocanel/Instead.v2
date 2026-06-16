@@ -782,6 +782,11 @@ function cloudEdit(id, patch) {
   return cloudUpdateRow(id, patch, 'Couldn’t save your changes — try again.');
 }
 
+function showDbError(err, fallback) {
+  console.error(fallback, err);
+  showToast(err?.message || fallback, 'error');
+}
+
 // ══════════════════════════════════════════════════════════
 // LISTS + SHARING (Phase 4)
 // ══════════════════════════════════════════════════════════
@@ -874,14 +879,14 @@ async function saveListFromSheet() {
     const { error } = await db.from('lists')
       .update({ title, is_public, share_slug })
       .eq('id', existing.id);
-    if (error) { showToast('Couldn’t save the list.', 'error'); return; }
+    if (error) { showDbError(error, 'Couldn’t save the list.'); return; }
     showToast('List saved.', 'success');
   } else {
     const { data, error } = await db.from('lists')
       .insert({ owner_id: currentUser.id, title, is_public, share_slug })
       .select()
       .single();
-    if (error) { showToast('Couldn’t create the list.', 'error'); return; }
+    if (error) { showDbError(error, 'Couldn’t create the list.'); return; }
     selectedListId = data.id;
     activeCat = 'lists';
     showToast('List created.', 'success');
@@ -898,7 +903,7 @@ async function deleteCurrentList() {
   await db.from('list_items').delete().eq('list_id', list.id);
   await db.from('list_shares').delete().eq('list_id', list.id);
   const { error } = await db.from('lists').delete().eq('id', list.id);
-  if (error) { showToast('Couldn’t delete the list.', 'error'); return; }
+  if (error) { showDbError(error, 'Couldn’t delete the list.'); return; }
   selectedListId = null;
   editingListId = null;
   closeSheet('listSheet');
@@ -949,7 +954,7 @@ async function sendListInvite(listId) {
 
 async function updateSharePermission(shareId, permission) {
   const { error } = await db.from('list_shares').update({ permission }).eq('id', shareId);
-  if (error) { showToast('Couldn’t update permission.', 'error'); return; }
+  if (error) { showDbError(error, 'Couldn’t update permission.'); return; }
   await fetchCloudLists();
   const list = editingListId ? cloudLists.find(l => l.id === editingListId) : null;
   renderListSheetSections(list);
@@ -958,7 +963,7 @@ async function updateSharePermission(shareId, permission) {
 
 async function removeShare(shareId) {
   const { error } = await db.from('list_shares').delete().eq('id', shareId);
-  if (error) { showToast('Couldn’t remove member.', 'error'); return; }
+  if (error) { showDbError(error, 'Couldn’t remove member.'); return; }
   await fetchCloudLists();
   const list = editingListId ? cloudLists.find(l => l.id === editingListId) : null;
   renderListSheetSections(list);
@@ -1007,7 +1012,7 @@ function openAddToList(itemId) {
 async function addItemToList(listId) {
   if (!pendingListItemId) return;
   const { error } = await db.from('list_items').insert({ list_id: listId, item_id: pendingListItemId });
-  if (error) { showToast('Couldn’t add item to list.', 'error'); return; }
+  if (error) { showDbError(error, 'Couldn’t add item to list.'); return; }
   closeSheet('addToListSheet');
   pendingListItemId = null;
   await refreshCloudLists();
@@ -1019,7 +1024,7 @@ async function removeItemFromList(listId, itemId) {
     .delete()
     .eq('list_id', listId)
     .eq('item_id', itemId);
-  if (error) { showToast('Couldn’t remove item.', 'error'); return; }
+  if (error) { showDbError(error, 'Couldn’t remove item.'); return; }
   await refreshCloudLists();
 }
 
