@@ -1576,7 +1576,10 @@ function getItemsForList(listId, source = null) {
 }
 
 function publicListUrl(list) {
-  return `${window.location.origin}${window.location.pathname}#list/${encodeURIComponent(list.share_slug)}`;
+  const url = new URL(window.location.pathname, window.location.origin);
+  url.searchParams.set('share', '1');
+  url.hash = `list/${encodeURIComponent(list.share_slug)}`;
+  return url.toString();
 }
 
 function generateShareSlug() {
