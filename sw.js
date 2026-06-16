@@ -2,11 +2,11 @@
 // Cache-first strategy: app loads instantly offline,
 // updates silently in the background when online.
 
-const CACHE_NAME = 'instead-v1';
+const CACHE_NAME = 'instead-v2';
 
 // Files to cache on install (adjust the HTML filename if yours differs)
 const PRECACHE_URLS = [
-  './instead_v2.html',
+  './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -68,7 +68,7 @@ self.addEventListener('fetch', event => {
         })
         .catch(() => {
           // Offline and not cached — return the app shell
-          return caches.match('./instead_v2.html');
+          return caches.match('./index.html');
         });
     })
   );

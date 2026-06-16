@@ -2,7 +2,7 @@
   "name": "Instead",
   "short_name": "Instead",
   "description": "Your intentional alternative to scrolling",
-  "start_url": "./instead_v2.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#F5EFE4",
