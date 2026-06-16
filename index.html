@@ -624,16 +624,22 @@ async function cloudAdd(fields) {
   renderTabs(); renderMain();
 }
 
-async function cloudEdit(id, patch) {
+// Optimistically patch a row in cloudItems, then persist. Toast on failure;
+// the next sign-in fetch reconciles. Used for edits, archive, delete, restore.
+async function cloudUpdateRow(id, patch, errMsg = 'Couldn’t sync that change — try again.') {
   const idx = cloudItems.findIndex(i => i.id === id);
   if (idx === -1) return;
-  cloudItems[idx] = { ...cloudItems[idx], ...patch };  // optimistic
+  cloudItems[idx] = { ...cloudItems[idx], ...patch };
   renderTabs(); renderMain();
 
   const { error } = await db.from('items')
     .update({ ...patch, updated_at: new Date().toISOString() })
     .eq('id', id);
-  if (error) showToast('Couldn’t save your changes — try again.', 'error');
+  if (error) showToast(errMsg, 'error');
+}
+
+function cloudEdit(id, patch) {
+  return cloudUpdateRow(id, patch, 'Couldn’t save your changes — try again.');
 }
 
 // ── Auth UI helpers ──────────────────────────────────────
@@ -1046,33 +1052,46 @@ function promptDone(id) {
 
 function confirmArchive() {
   if (!pendingDoneId) return;
-  const items = [...BUILT_IN, ...customItems].map(resolveItem);
-  const item  = items.find(i => i.id === pendingDoneId);
-  if (!item) return;
-  const notes = overrides[pendingDoneId]?.notes || '';
-  archivedItems.push({ ...item, notes, archivedAt: new Date().toISOString() });
-  if (pendingDoneId.startsWith('c')) {
-    customItems = customItems.filter(i => i.id !== pendingDoneId);
-  } else {
-    deletedIds.add(pendingDoneId);
-  }
+  const id = pendingDoneId;
   pendingDoneId = null;
-  save(); closeSheet('doneSheet'); renderTabs(); renderMain();
+  closeSheet('doneSheet');
+
+  if (isCloud()) {
+    cloudUpdateRow(id, { status: 'archived', archived_at: new Date().toISOString() });
+    return;
+  }
+  const items = [...BUILT_IN, ...customItems].map(resolveItem);
+  const item  = items.find(i => i.id === id);
+  if (!item) return;
+  const notes = overrides[id]?.notes || '';
+  archivedItems.push({ ...item, notes, archivedAt: new Date().toISOString() });
+  if (id.startsWith('c')) customItems = customItems.filter(i => i.id !== id);
+  else deletedIds.add(id);
+  save(); renderTabs(); renderMain();
 }
 
 function confirmDelete() {
   if (!pendingDoneId) return;
-  if (pendingDoneId.startsWith('c')) {
-    customItems = customItems.filter(i => i.id !== pendingDoneId);
-  } else {
-    deletedIds.add(pendingDoneId);
-  }
-  delete overrides[pendingDoneId];
+  const id = pendingDoneId;
   pendingDoneId = null;
-  save(); closeSheet('doneSheet'); renderTabs(); renderMain();
+  closeSheet('doneSheet');
+
+  if (isCloud()) {
+    // Soft delete → recoverable in Recently Deleted for 30 days.
+    cloudUpdateRow(id, { status: 'deleted', deleted_at: new Date().toISOString() });
+    return;
+  }
+  if (id.startsWith('c')) customItems = customItems.filter(i => i.id !== id);
+  else deletedIds.add(id);
+  delete overrides[id];
+  save(); renderTabs(); renderMain();
 }
 
 function restoreFromArchive(id) {
+  if (isCloud()) {
+    cloudUpdateRow(id, { status: 'active', archived_at: null });
+    return;
+  }
   const idx = archivedItems.findIndex(i => i.id === id);
   if (idx === -1) return;
   const item = archivedItems[idx];
@@ -1085,6 +1104,11 @@ function restoreFromArchive(id) {
 }
 
 function deleteFromArchive(id) {
+  if (isCloud()) {
+    // "Delete" from the archive is also a soft delete → Recently Deleted.
+    cloudUpdateRow(id, { status: 'deleted', deleted_at: new Date().toISOString() });
+    return;
+  }
   archivedItems = archivedItems.filter(i => i.id !== id);
   delete overrides[id];
   save(); renderTabs(); renderMain();
