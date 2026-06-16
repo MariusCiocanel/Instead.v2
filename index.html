@@ -877,13 +877,13 @@ async function saveListFromSheet() {
 
   if (existing) {
     const { error } = await db.from('lists')
-      .update({ title, is_public, share_slug })
+      .update({ name: title, is_public, share_slug })
       .eq('id', existing.id);
     if (error) { showDbError(error, 'Couldn’t save the list.'); return; }
     showToast('List saved.', 'success');
   } else {
     const { data, error } = await db.from('lists')
-      .insert({ owner_id: currentUser.id, title, is_public, share_slug })
+      .insert({ owner_id: currentUser.id, name: title, is_public, share_slug })
       .select()
       .single();
     if (error) { showDbError(error, 'Couldn’t create the list.'); return; }
@@ -1527,7 +1527,7 @@ function getDeletedItems() {
 
 // ── List accessors (cloud only) ──────────────────────────
 function listTitle(list) {
-  return list?.title || list?.name || 'Untitled list';
+  return list?.name || list?.title || 'Untitled list';
 }
 
 function listShare(listId) {

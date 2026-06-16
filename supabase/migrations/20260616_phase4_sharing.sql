@@ -1,7 +1,7 @@
 -- Phase 4 sharing: public lists, email invites, invite links, and viewer/editor permissions.
 
 alter table public.lists
-  add column if not exists title text not null default 'Untitled list',
+  add column if not exists name text not null default 'Untitled list',
   add column if not exists is_public boolean not null default false,
   add column if not exists share_slug text;
 
