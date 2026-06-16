@@ -766,11 +766,14 @@ async function hardDeleteItem(id) {
 
 
 // ── Import on-device (localStorage) data into the cloud ──
-// Manual, de-duplicating merge. Built-ins are matched to existing cloud
-// rows by title and patched in place (edit / archive / delete) so they
-// are never duplicated; custom items are inserted unless a same-titled
-// custom row already exists. Local data is cleared after a clean import.
+// Manual, de-duplicating merge. Items are matched to existing cloud rows
+// by URL (falling back to title for items that have no URL). Built-ins are
+// patched in place (edit / archive / delete) so they are never duplicated;
+// custom items are inserted unless a matching cloud row already exists.
+// Local data is cleared after a clean import.
 const norm = s => String(s || '').trim().toLowerCase();
+const normUrl = u => norm(u).replace(/\/+$/, '');           // ignore trailing slash
+const itemKey = it => normUrl(it.url) || ('title:' + norm(it.title));
 
 function updateImportButton() {
   const btn = document.getElementById('importLocalBtn');
@@ -794,15 +797,15 @@ async function importLocalData() {
     const archivedIds = new Set(archivedItems.map(a => a.id));
 
     // Index existing cloud rows by title for built-in matching.
-    const byTitle = new Map();
-    cloudItems.forEach(r => byTitle.set(norm(r.title), r));
-    const customTitles = new Set(
-      cloudItems.filter(r => r.source === 'custom').map(r => norm(r.title))
+    const byKey = new Map();
+    cloudItems.forEach(r => byKey.set(itemKey(r), r));
+    const customKeys = new Set(
+      cloudItems.filter(r => r.source === 'custom').map(r => itemKey(r))
     );
 
     // Built-ins: push local changes (edit / archive / delete) onto the cloud row.
     BUILT_IN.forEach((b, i) => {
-      const cloudRow = byTitle.get(norm(b.title));
+      const cloudRow = byKey.get(itemKey(b));
       const ov = overrides[b.id] || {};
       const merged = { ...b, ...ov };
 
@@ -835,15 +838,19 @@ async function importLocalData() {
     // Active custom items → insert unless a same-titled custom already exists.
     customItems.forEach((c, idx) => {
       if (archivedIds.has(c.id)) return;
-      if (customTitles.has(norm(c.title))) return;
       const merged = { ...c, ...(overrides[c.id] || {}) };
+      const key = itemKey(merged);
+      if (customKeys.has(key)) return;
+      customKeys.add(key);                       // also guard against intra-batch dups
       inserts.push(rowFrom(merged, uid, { source: 'custom', status: 'active', sort_order: 1000 + idx }));
     });
 
     // Archived custom items.
     archivedItems.forEach((a, idx) => {
       if (!a.id.startsWith('c')) return;         // built-in archives handled above
-      if (customTitles.has(norm(a.title))) return;
+      const key = itemKey(a);
+      if (customKeys.has(key)) return;
+      customKeys.add(key);
       inserts.push(rowFrom(a, uid, { source: 'custom', status: 'archived',
         archived_at: a.archivedAt || new Date().toISOString(), sort_order: 2000 + idx }));
     });
