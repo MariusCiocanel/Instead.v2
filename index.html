@@ -801,7 +801,7 @@ async function importLocalData() {
     const updates = [];                       // { id, patch }
     const archivedIds = new Set(archivedItems.map(a => a.id));
 
-    // Index existing cloud rows by title for built-in matching.
+    // Index existing cloud rows by URL/title key for built-in matching.
     const byKey = new Map();
     cloudItems.forEach(r => byKey.set(itemKey(r), r));
     const customKeys = new Set(
@@ -840,7 +840,7 @@ async function importLocalData() {
       if (patch) updates.push({ id: cloudRow.id, patch });
     });
 
-    // Active custom items → insert unless a same-titled custom already exists.
+    // Active custom items → insert unless a matching custom already exists.
     customItems.forEach((c, idx) => {
       if (archivedIds.has(c.id)) return;
       const merged = { ...c, ...(overrides[c.id] || {}) };

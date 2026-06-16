@@ -17,7 +17,8 @@ Relevant commits on `main`: `bb4c20c` (scaffolding) → `750e0b4` (seed/fetch/pu
 1. **RLS infinite recursion** in the sharing-table policies (`lists` ↔ `list_shares`),
    which broke ALL cloud reads. Fixed DB-side with two `SECURITY DEFINER` helpers:
    `public.is_list_owner(uuid)` and `public.is_list_shared_with_me(uuid)`, and rewriting
-   the recursive policies to call them. **This change lives only in Supabase, not in the repo.**
+   the recursive policies to call them. The live hotfix is now captured in
+   `supabase/migrations/20260616_fix_list_rls_recursion.sql`.
 2. **Double-seed** on concurrent auth events (seeded 102 rows). Fixed with a `syncInFlight`
    guard in `syncOnLogin()` (`d68ba46`).
 
