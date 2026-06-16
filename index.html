@@ -1,153 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="theme-color" content="#2D5A40">
-  <title>Instead</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#2D5A40">
+<title>Instead</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Instead">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- ── Supabase JS Client ── -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #F5EFE4;
+  --cream-dark: #EDE5D6;
+  --terra: #B84A2F;
+  --terra-light: #D4604A;
+  --forest: #2D5A40;
+  --forest-light: #3D7255;
+  --amber: #8B6914;
+  --amber-bg: #FFF8E7;
+  --amber-border: #F0D070;
+  --ink: #1C1B18;
+  --ink-light: #5A584F;
+  --ink-faint: #A09D93;
+  --card: #FFFFFF;
+  --shadow: 0 2px 12px rgba(28,27,24,0.10);
+  --shadow-hover: 0 4px 20px rgba(28,27,24,0.15);
+  --radius: 14px;
+  --font-head: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+}
+html, body { height: 100%; background: var(--cream); color: var(--ink); font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
+body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidden; }
 
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-title" content="Instead">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── HEADER ── */
+.app-header { background: var(--cream); padding: 16px 20px 12px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 1.5px solid var(--cream-dark); }
+.header-left { display: flex; align-items: baseline; gap: 8px; }
+.app-title { font-family: var(--font-head); font-size: 28px; font-weight: 900; color: var(--ink); letter-spacing: -0.5px; line-height: 1; }
+.app-subtitle { font-size: 12px; color: var(--ink-faint); font-weight: 500; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.icon-btn { width: 38px; height: 38px; border: none; background: var(--cream-dark); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--ink); transition: background 0.15s, transform 0.1s; }
+.icon-btn:active { transform: scale(0.93); }
+.icon-btn:hover { background: #DDD8CC; }
 
-    :root {
-      --cream: #F5EFE4;
-      --cream-dark: #EDE5D6;
-      --terra: #B84A2F;
-      --terra-light: #D4604A;
-      --forest: #2D5A40;
-      --forest-light: #3D7255;
-      --amber: #8B6914;
-      --amber-bg: #FFF8E7;
-      --amber-border: #F0D070;
-      --ink: #1C1B18;
-      --ink-light: #5A584F;
-      --ink-faint: #A09D93;
-      --card: #FFFFFF;
-      --shadow: 0 2px 12px rgba(28,27,24,0.10);
-      --shadow-hover: 0 4px 20px rgba(28,27,24,0.15);
-      --radius: 14px;
-      --font-head: 'Playfair Display', Georgia, serif;
-      --font-body: 'DM Sans', system-ui, sans-serif;
-    }
+/* ── NEW: AUTH BUTTON ── */
+.auth-btn {
+  width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-body); font-size: 15px; font-weight: 700;
+  transition: background 0.15s, transform 0.1s; flex-shrink: 0;
+}
+.auth-btn:active { transform: scale(0.93); }
+.auth-btn.logged-out { background: var(--cream-dark); color: var(--ink-light); }
+.auth-btn.logged-out:hover { background: #DDD8CC; }
+.auth-btn.logged-in { background: var(--forest); color: white; }
+.auth-btn.logged-in:hover { background: var(--forest-light); }
 
-    html, body { height: 100%; background: var(--cream); color: var(--ink); font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
-    body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidden; }
+/* ── NEW: AUTH SHEET STYLES ── */
+.auth-mode-tabs {
+  display: flex; background: var(--cream-dark); border-radius: 10px;
+  padding: 3px; margin-bottom: 20px; gap: 0;
+}
+.auth-mode-btn {
+  flex: 1; padding: 8px; border: none; border-radius: 8px;
+  font-family: var(--font-body); font-size: 14px; font-weight: 600;
+  cursor: pointer; background: transparent; color: var(--ink-light);
+  transition: all 0.15s;
+}
+.auth-mode-btn.active {
+  background: white; color: var(--ink);
+  box-shadow: 0 1px 4px rgba(28,27,24,0.12);
+}
+.auth-message {
+  padding: 10px 14px; border-radius: 8px; font-size: 13px;
+  margin-bottom: 14px; line-height: 1.5; display: none;
+}
+.auth-message.error { background: #fdf0ee; color: var(--terra); border: 1px solid #f0c4bb; display: block; }
+.auth-message.success { background: #edfaf3; color: var(--forest); border: 1px solid #b2e8cf; display: block; }
+.auth-divider {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-faint); margin: 12px 0;
+}
+.auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--cream-dark); }
 
-    /* ── HEADER ── */
-    .app-header { background: var(--cream); padding: 16px 20px 12px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 1.5px solid var(--cream-dark); }
-    .header-left { display: flex; align-items: baseline; gap: 8px; }
-    .app-title { font-family: var(--font-head); font-size: 28px; font-weight: 900; color: var(--ink); letter-spacing: -0.5px; line-height: 1; }
-    .app-subtitle { font-size: 12px; color: var(--ink-faint); font-weight: 500; }
-    .header-actions { display: flex; gap: 8px; align-items: center; }
-    .icon-btn { width: 38px; height: 38px; border: none; background: var(--cream-dark); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--ink); transition: background 0.15s, transform 0.1s; }
-    .icon-btn:active { transform: scale(0.93); }
-    .icon-btn:hover { background: #DDD8CC; }
+/* ── NEW: USER MENU STYLES ── */
+.user-info-row {
+  display: flex; align-items: center; gap: 14px;
+  padding-bottom: 16px; border-bottom: 1.5px solid var(--cream-dark); margin-bottom: 16px;
+}
+.user-avatar-lg {
+  width: 52px; height: 52px; border-radius: 50%; background: var(--forest);
+  color: white; display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 700; flex-shrink: 0;
+  font-family: var(--font-body);
+}
+.user-detail-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint); margin-bottom: 3px; }
+.user-email-text { font-size: 14px; color: var(--ink-light); word-break: break-all; }
+.user-sync-row {
+  background: var(--amber-bg); border: 1px solid var(--amber-border);
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;
+  font-size: 13px; color: var(--amber); line-height: 1.5;
+}
+.user-sync-row strong { display: block; margin-bottom: 2px; font-size: 14px; }
 
-    /* ── TABS ── */
-    .tabs-wrap { flex-shrink: 0; background: var(--cream); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; border-bottom: 1.5px solid var(--cream-dark); }
-    .tabs-wrap::-webkit-scrollbar { display: none; }
-    .tabs { display: flex; gap: 4px; padding: 10px 16px; min-width: max-content; }
-    .tab { padding: 6px 14px; border: none; border-radius: 20px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: var(--ink-light); transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
-    .tab:hover { background: var(--cream-dark); color: var(--ink); }
-    .tab.active { background: var(--ink); color: white; }
-    .tab.archive-tab.active { background: var(--amber); }
-    .tab-count { font-size: 11px; font-weight: 700; opacity: 0.7; background: rgba(255,255,255,0.2); padding: 1px 5px; border-radius: 8px; }
-    .tab.active .tab-count { background: rgba(255,255,255,0.25); }
+/* ── TABS ── */
+.tabs-wrap { flex-shrink: 0; background: var(--cream); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; border-bottom: 1.5px solid var(--cream-dark); }
+.tabs-wrap::-webkit-scrollbar { display: none; }
+.tabs { display: flex; gap: 4px; padding: 10px 16px; min-width: max-content; }
+.tab { padding: 6px 14px; border: none; border-radius: 20px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: var(--ink-light); transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.tab:hover { background: var(--cream-dark); color: var(--ink); }
+.tab.active { background: var(--ink); color: white; }
+.tab.archive-tab.active { background: var(--amber); }
+.tab-count { font-size: 11px; font-weight: 700; opacity: 0.7; background: rgba(255,255,255,0.2); padding: 1px 5px; border-radius: 8px; }
+.tab.active .tab-count { background: rgba(255,255,255,0.25); }
 
-    /* ── MAIN ── */
-    .main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px 100px; }
+/* ── MAIN ── */
+.main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px 100px; }
 
-    /* ── CARDS ── */
-    .card { background: var(--card); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 12px; box-shadow: var(--shadow); display: flex; gap: 14px; align-items: flex-start; transition: box-shadow 0.2s; }
-    .card-emoji { font-size: 24px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
-    .card-body { flex: 1; min-width: 0; }
-    .card-title { font-family: var(--font-head); font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.3; margin-bottom: 2px; }
-    .card-sub { font-size: 13px; color: var(--ink-faint); line-height: 1.4; margin-bottom: 2px; }
-    .card-notes { font-size: 13px; color: var(--amber); background: var(--amber-bg); border-left: 3px solid var(--amber-border); border-radius: 0 6px 6px 0; padding: 6px 10px; margin-top: 8px; line-height: 1.5; white-space: pre-wrap; }
-    .card-meta { font-size: 11px; color: var(--ink-faint); margin-top: 4px; }
-    .card-actions { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
-    .btn-open { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; background: var(--terra); color: white; border: none; border-radius: 20px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; transition: background 0.15s, transform 0.1s; }
-    .btn-open:hover { background: var(--terra-light); }
-    .btn-open:active { transform: scale(0.96); }
-    .btn-done { padding: 7px 14px; background: transparent; border: 1.5px solid var(--cream-dark); color: var(--ink-light); border-radius: 20px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-    .btn-done:hover { background: var(--cream-dark); }
-    .btn-edit { padding: 7px 12px; background: transparent; border: 1.5px solid var(--cream-dark); color: var(--ink-faint); border-radius: 20px; font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px; }
-    .btn-edit:hover { background: var(--cream-dark); color: var(--ink-light); }
-    .btn-restore { padding: 7px 14px; background: transparent; border: 1.5px solid var(--cream-dark); color: var(--ink-faint); border-radius: 20px; font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
-    .btn-restore:hover { background: var(--cream-dark); }
-    .btn-perm-delete { padding: 7px 12px; background: transparent; border: none; color: var(--ink-faint); border-radius: 20px; font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: color 0.15s; }
-    .btn-perm-delete:hover { color: var(--terra); }
+/* ── CARDS ── */
+.card { background: var(--card); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 12px; box-shadow: var(--shadow); display: flex; gap: 14px; align-items: flex-start; transition: box-shadow 0.2s; }
+.card-emoji { font-size: 24px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+.card-body { flex: 1; min-width: 0; }
+.card-title { font-family: var(--font-head); font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.3; margin-bottom: 2px; }
+.card-sub { font-size: 13px; color: var(--ink-faint); line-height: 1.4; margin-bottom: 2px; }
+.card-notes { font-size: 13px; color: var(--amber); background: var(--amber-bg); border-left: 3px solid var(--amber-border); border-radius: 0 6px 6px 0; padding: 6px 10px; margin-top: 8px; line-height: 1.5; white-space: pre-wrap; }
+.card-meta { font-size: 11px; color: var(--ink-faint); margin-top: 4px; }
+.card-actions { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
+.btn-open { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; background: var(--terra); color: white; border: none; border-radius: 20px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; transition: background 0.15s, transform 0.1s; }
+.btn-open:hover { background: var(--terra-light); }
+.btn-open:active { transform: scale(0.96); }
+.btn-done { padding: 7px 14px; background: transparent; border: 1.5px solid var(--cream-dark); color: var(--ink-light); border-radius: 20px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.btn-done:hover { background: var(--cream-dark); }
+.btn-edit { padding: 7px 12px; background: transparent; border: 1.5px solid var(--cream-dark); color: var(--ink-faint); border-radius: 20px; font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px; }
+.btn-edit:hover { background: var(--cream-dark); color: var(--ink-light); }
+.btn-restore { padding: 7px 14px; background: transparent; border: 1.5px solid var(--cream-dark); color: var(--ink-faint); border-radius: 20px; font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.btn-restore:hover { background: var(--cream-dark); }
+.btn-perm-delete { padding: 7px 12px; background: transparent; border: none; color: var(--ink-faint); border-radius: 20px; font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: color 0.15s; }
+.btn-perm-delete:hover { color: var(--terra); }
+.card.archived { background: var(--amber-bg); border-left: 4px solid var(--amber-border); box-shadow: none; }
+.card.archived .card-title { color: var(--amber); }
 
-    /* Archive card style */
-    .card.archived { background: var(--amber-bg); border-left: 4px solid var(--amber-border); box-shadow: none; }
-    .card.archived .card-title { color: var(--amber); }
+/* ── SHOW DONE ── */
+.show-done-wrap { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+.show-done-btn { background: none; border: none; font-family: var(--font-body); font-size: 12px; color: var(--ink-faint); font-weight: 600; cursor: pointer; padding: 4px 8px; }
+.section-divider { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); padding: 10px 0 6px; display: flex; align-items: center; gap: 10px; }
+.section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--cream-dark); }
 
-    /* ── SHOW DONE ── */
-    .show-done-wrap { display: flex; justify-content: flex-end; margin-bottom: 4px; }
-    .show-done-btn { background: none; border: none; font-family: var(--font-body); font-size: 12px; color: var(--ink-faint); font-weight: 600; cursor: pointer; padding: 4px 8px; }
-    .section-divider { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); padding: 10px 0 6px; display: flex; align-items: center; gap: 10px; }
-    .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--cream-dark); }
+/* ── EMPTY ── */
+.empty { text-align: center; padding: 60px 20px; color: var(--ink-faint); }
+.empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty h3 { font-family: var(--font-head); font-size: 22px; color: var(--ink-light); margin-bottom: 8px; }
+.empty p { font-size: 14px; line-height: 1.6; }
 
-    /* ── EMPTY ── */
-    .empty { text-align: center; padding: 60px 20px; color: var(--ink-faint); }
-    .empty-icon { font-size: 48px; margin-bottom: 16px; }
-    .empty h3 { font-family: var(--font-head); font-size: 22px; color: var(--ink-light); margin-bottom: 8px; }
-    .empty p { font-size: 14px; line-height: 1.6; }
+/* ── FAB ── */
+.fab { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); right: 20px; background: var(--forest); color: white; border: none; border-radius: 28px; padding: 14px 22px; font-family: var(--font-body); font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 20px rgba(45,90,64,0.35); display: flex; align-items: center; gap: 8px; transition: background 0.15s, transform 0.15s; z-index: 100; }
+.fab:hover { background: var(--forest-light); }
+.fab:active { transform: scale(0.96); }
 
-    /* ── FAB ── */
-    .fab { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); right: 20px; background: var(--forest); color: white; border: none; border-radius: 28px; padding: 14px 22px; font-family: var(--font-body); font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 20px rgba(45,90,64,0.35); display: flex; align-items: center; gap: 8px; transition: background 0.15s, transform 0.15s; z-index: 100; }
-    .fab:hover { background: var(--forest-light); }
-    .fab:active { transform: scale(0.96); }
+/* ── SHARED OVERLAY BASE ── */
+.sheet { position: fixed; inset: 0; background: rgba(28,27,24,0.55); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: flex-end; justify-content: center; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+.sheet.open { display: flex; }
+.sheet-card { background: var(--card); border-radius: 20px; padding: 24px 20px; width: 100%; max-width: 480px; box-shadow: 0 8px 40px rgba(28,27,24,0.25); animation: slideUp 0.25s ease; max-height: 90dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.sheet-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--forest); margin-bottom: 10px; }
+.sheet-emoji { font-size: 38px; margin-bottom: 10px; display: block; }
+.sheet-title { font-family: var(--font-head); font-size: 22px; font-weight: 700; color: var(--ink); margin-bottom: 5px; line-height: 1.25; }
+.sheet-sub { font-size: 14px; color: var(--ink-faint); margin-bottom: 20px; line-height: 1.5; }
+.sheet-actions { display: flex; flex-direction: column; gap: 10px; }
+.btn-sheet-primary { padding: 14px; background: var(--terra); color: white; border: none; border-radius: 12px; font-family: var(--font-body); font-size: 15px; font-weight: 700; cursor: pointer; text-decoration: none; text-align: center; transition: background 0.15s; display: block; }
+.btn-sheet-primary:hover { background: var(--terra-light); }
+.btn-sheet-secondary { padding: 13px; background: var(--cream-dark); color: var(--ink-light); border: none; border-radius: 12px; font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.btn-sheet-secondary:hover { background: #DDD8CC; }
+.btn-sheet-ghost { padding: 11px; background: transparent; color: var(--ink-faint); border: none; font-family: var(--font-body); font-size: 14px; cursor: pointer; border-radius: 12px; }
+.btn-sheet-ghost:hover { background: var(--cream-dark); }
+.btn-sheet-archive { padding: 14px; background: var(--amber-bg); color: var(--amber); border: 1.5px solid var(--amber-border); border-radius: 12px; font-family: var(--font-body); font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.btn-sheet-archive:hover { background: #FFF0C0; }
+.btn-sheet-danger { padding: 13px; background: transparent; color: var(--terra); border: 1.5px solid #F0C4BB; border-radius: 12px; font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.btn-sheet-danger:hover { background: #FDF0EE; }
 
-    /* ── SHARED OVERLAY BASE ── */
-    .sheet { position: fixed; inset: 0; background: rgba(28,27,24,0.55); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: flex-end; justify-content: center; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
-    .sheet.open { display: flex; }
-    .sheet-card { background: var(--card); border-radius: 20px; padding: 24px 20px; width: 100%; max-width: 480px; box-shadow: 0 8px 40px rgba(28,27,24,0.25); animation: slideUp 0.25s ease; max-height: 90dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .sheet-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--forest); margin-bottom: 10px; }
-    .sheet-emoji { font-size: 38px; margin-bottom: 10px; display: block; }
-    .sheet-title { font-family: var(--font-head); font-size: 22px; font-weight: 700; color: var(--ink); margin-bottom: 5px; line-height: 1.25; }
-    .sheet-sub { font-size: 14px; color: var(--ink-faint); margin-bottom: 20px; line-height: 1.5; }
-    .sheet-actions { display: flex; flex-direction: column; gap: 10px; }
+/* ── FORMS ── */
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-light); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 11px 14px; border: 1.5px solid var(--cream-dark); border-radius: 10px; font-family: var(--font-body); font-size: 15px; color: var(--ink); background: var(--cream); outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--terra); }
+.form-group textarea { resize: none; height: 80px; }
+.form-group textarea.notes-ta { border-color: var(--amber-border); background: var(--amber-bg); }
+.form-group textarea.notes-ta:focus { border-color: var(--amber); }
+.form-h2 { font-family: var(--font-head); font-size: 20px; font-weight: 700; margin-bottom: 18px; }
+.form-actions { display: flex; gap: 10px; margin-top: 18px; }
+.btn-form-submit { flex: 1; padding: 13px; background: var(--terra); color: white; border: none; border-radius: 12px; font-family: var(--font-body); font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+.btn-form-submit:hover { background: var(--terra-light); }
+.btn-form-submit:disabled { background: var(--ink-faint); cursor: not-allowed; }
+.btn-form-cancel { padding: 13px 18px; background: var(--cream-dark); color: var(--ink-light); border: none; border-radius: 12px; font-family: var(--font-body); font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.btn-form-cancel:hover { background: #DDD8CC; }
+.notes-hint { font-size: 11px; color: var(--amber); margin-top: 4px; }
 
-    /* Buttons inside sheets */
-    .btn-sheet-primary { padding: 14px; background: var(--terra); color: white; border: none; border-radius: 12px; font-family: var(--font-body); font-size: 15px; font-weight: 700; cursor: pointer; text-decoration: none; text-align: center; transition: background 0.15s; display: block; }
-    .btn-sheet-primary:hover { background: var(--terra-light); }
-    .btn-sheet-secondary { padding: 13px; background: var(--cream-dark); color: var(--ink-light); border: none; border-radius: 12px; font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-    .btn-sheet-secondary:hover { background: #DDD8CC; }
-    .btn-sheet-ghost { padding: 11px; background: transparent; color: var(--ink-faint); border: none; font-family: var(--font-body); font-size: 14px; cursor: pointer; border-radius: 12px; }
-    .btn-sheet-ghost:hover { background: var(--cream-dark); }
-    .btn-sheet-archive { padding: 14px; background: var(--amber-bg); color: var(--amber); border: 1.5px solid var(--amber-border); border-radius: 12px; font-family: var(--font-body); font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
-    .btn-sheet-archive:hover { background: #FFF0C0; }
-    .btn-sheet-danger { padding: 13px; background: transparent; color: var(--terra); border: 1.5px solid #F0C4BB; border-radius: 12px; font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-    .btn-sheet-danger:hover { background: #FDF0EE; }
-
-    /* ── FORMS ── */
-    .form-group { margin-bottom: 14px; }
-    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-light); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px; }
-    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 11px 14px; border: 1.5px solid var(--cream-dark); border-radius: 10px; font-family: var(--font-body); font-size: 15px; color: var(--ink); background: var(--cream); outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--terra); }
-    .form-group textarea { resize: none; height: 80px; }
-    .form-group textarea.notes-ta { border-color: var(--amber-border); background: var(--amber-bg); }
-    .form-group textarea.notes-ta:focus { border-color: var(--amber); }
-    .form-h2 { font-family: var(--font-head); font-size: 20px; font-weight: 700; margin-bottom: 18px; }
-    .form-actions { display: flex; gap: 10px; margin-top: 18px; }
-    .btn-form-submit { flex: 1; padding: 13px; background: var(--terra); color: white; border: none; border-radius: 12px; font-family: var(--font-body); font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.15s; }
-    .btn-form-submit:hover { background: var(--terra-light); }
-    .btn-form-cancel { padding: 13px 18px; background: var(--cream-dark); color: var(--ink-light); border: none; border-radius: 12px; font-family: var(--font-body); font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-    .btn-form-cancel:hover { background: #DDD8CC; }
-    .notes-hint { font-size: 11px; color: var(--amber); margin-top: 4px; }
-
-    @media (min-width: 480px) { .main { padding: 20px 20px 100px; } .app-title { font-size: 32px; } }
-  </style>
+@media (min-width: 480px) { .main { padding: 20px 20px 100px; } .app-title { font-size: 32px; } }
+</style>
 </head>
 <body>
 
@@ -158,6 +215,13 @@
     <span class="app-subtitle" id="headerCount"></span>
   </div>
   <div class="header-actions">
+    <!-- Auth button: shows person icon when logged out, user initial when logged in -->
+    <button class="auth-btn logged-out" id="authBtn" title="Sign in" aria-label="Sign in">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="5.5" r="3" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M2 14.5c0-3.314 2.686-5.5 6-5.5s6 2.186 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
     <button class="icon-btn" onclick="backupData()" title="Backup data" aria-label="Download backup">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 1v8M4.5 6l3 3 3-3M2 10v2a1 1 0 001 1h9a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
@@ -176,6 +240,7 @@
 <!-- FAB -->
 <button class="fab" onclick="openSurprise()"><span>✨</span> Surprise me</button>
 
+
 <!-- ── SURPRISE SHEET ── -->
 <div class="sheet" id="surpriseSheet">
   <div class="sheet-card">
@@ -191,7 +256,7 @@
   </div>
 </div>
 
-<!-- ── DONE PROMPT SHEET (archive or delete?) ── -->
+<!-- ── DONE PROMPT SHEET ── -->
 <div class="sheet" id="doneSheet">
   <div class="sheet-card">
     <div class="sheet-label">✓ You did it!</div>
@@ -264,9 +329,223 @@
   </div>
 </div>
 
+<!-- ── NEW: AUTH SHEET (sign in / sign up) ── -->
+<div class="sheet" id="authSheet">
+  <div class="sheet-card">
+    <div class="auth-mode-tabs">
+      <button class="auth-mode-btn active" id="signinTab" onclick="setAuthMode('signin')">Sign in</button>
+      <button class="auth-mode-btn" id="signupTab" onclick="setAuthMode('signup')">Create account</button>
+    </div>
+
+    <div class="form-h2" id="authHeading">Welcome back</div>
+    <div class="auth-message" id="authMessage"></div>
+
+    <div class="form-group" id="displayNameGroup" style="display:none">
+      <label>Your name (optional)</label>
+      <input type="text" id="authDisplayName" placeholder="What should we call you?" autocomplete="name" />
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="authPassword" placeholder="Your password" autocomplete="current-password" />
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-form-cancel" onclick="closeSheet('authSheet')">Cancel</button>
+      <button class="btn-form-submit" id="authSubmitBtn" onclick="submitAuth()">Sign in</button>
+    </div>
+
+    <button class="btn-sheet-ghost" id="forgotBtn" onclick="sendPasswordReset()"
+      style="margin-top: 10px; width: 100%; font-size: 13px;">
+      Forgot password?
+    </button>
+  </div>
+</div>
+
+<!-- ── NEW: USER MENU SHEET (shown when already signed in) ── -->
+<div class="sheet" id="userSheet">
+  <div class="sheet-card">
+    <div class="user-info-row">
+      <div class="user-avatar-lg" id="userAvatarLg"></div>
+      <div>
+        <div class="user-detail-label">Signed in as</div>
+        <div class="user-email-text" id="userEmailText"></div>
+      </div>
+    </div>
+
+    <div class="user-sync-row">
+      <strong>☁️ Cloud sync coming next</strong>
+      Your items are still saved locally. Once the data layer is connected, everything will sync automatically.
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn-sheet-danger" onclick="signOut()">Sign out</button>
+      <button class="btn-sheet-ghost" onclick="closeSheet('userSheet')">Close</button>
+    </div>
+  </div>
+</div>
+
+
 <script>
 // ══════════════════════════════════════════════════════════
-// BUILT-IN DATA (your original 51 items)
+// SUPABASE CLIENT
+// ══════════════════════════════════════════════════════════
+const { createClient } = supabase; // supabase = window.supabase from CDN
+const db = createClient(
+  'https://prvtestaxrftoslzpoth.supabase.co',
+  'sb_publishable_dxkaf0hxwUSLi_2B-ZdfjQ_SOfwWBSW'
+);
+
+// ── Auth state ───────────────────────────────────────────
+let currentUser = null;
+
+// Fires on every auth change, including INITIAL_SESSION on page load
+db.auth.onAuthStateChange((event, session) => {
+  currentUser = session?.user ?? null;
+  updateAuthUI();
+  if (event === 'SIGNED_IN')  closeSheet('authSheet');
+  if (event === 'SIGNED_OUT') closeSheet('userSheet');
+});
+
+// ── Auth UI helpers ──────────────────────────────────────
+function updateAuthUI() {
+  const btn = document.getElementById('authBtn');
+  if (!btn) return;
+  if (currentUser) {
+    const name = currentUser.user_metadata?.display_name || currentUser.email || '?';
+    const initial = name[0].toUpperCase();
+    btn.className = 'auth-btn logged-in';
+    btn.title = currentUser.email;
+    btn.setAttribute('aria-label', 'Account');
+    btn.onclick = openUserMenu;
+    btn.innerHTML = initial;
+  } else {
+    btn.className = 'auth-btn logged-out';
+    btn.title = 'Sign in';
+    btn.setAttribute('aria-label', 'Sign in');
+    btn.onclick = openAuthPanel;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="5.5" r="3" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M2 14.5c0-3.314 2.686-5.5 6-5.5s6 2.186 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>`;
+  }
+}
+
+// ── Auth mode (signin / signup) ──────────────────────────
+let authMode = 'signin';
+
+function setAuthMode(mode) {
+  authMode = mode;
+  const isSignup = mode === 'signup';
+  document.getElementById('signinTab').className = 'auth-mode-btn' + (isSignup ? '' : ' active');
+  document.getElementById('signupTab').className = 'auth-mode-btn' + (isSignup ? ' active' : '');
+  document.getElementById('authHeading').textContent = isSignup ? 'Create your account' : 'Welcome back';
+  document.getElementById('authSubmitBtn').textContent = isSignup ? 'Create account' : 'Sign in';
+  document.getElementById('displayNameGroup').style.display = isSignup ? 'block' : 'none';
+  document.getElementById('forgotBtn').style.display = isSignup ? 'none' : 'block';
+  document.getElementById('authPassword').autocomplete = isSignup ? 'new-password' : 'current-password';
+  clearAuthMessage();
+}
+
+function openAuthPanel() {
+  setAuthMode('signin');
+  openSheet('authSheet');
+  setTimeout(() => document.getElementById('authEmail').focus(), 120);
+}
+
+function openUserMenu() {
+  if (!currentUser) { openAuthPanel(); return; }
+  const name = currentUser.user_metadata?.display_name || currentUser.email || '?';
+  document.getElementById('userAvatarLg').textContent = name[0].toUpperCase();
+  document.getElementById('userEmailText').textContent = currentUser.email;
+  openSheet('userSheet');
+}
+
+function showAuthMessage(text, type) {
+  const el = document.getElementById('authMessage');
+  el.textContent = text;
+  el.className = `auth-message ${type}`;
+}
+
+function clearAuthMessage() {
+  const el = document.getElementById('authMessage');
+  el.textContent = '';
+  el.className = 'auth-message';
+}
+
+// ── Sign in / Sign up ────────────────────────────────────
+async function submitAuth() {
+  const email    = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const name     = document.getElementById('authDisplayName').value.trim();
+  const btn      = document.getElementById('authSubmitBtn');
+
+  if (!email || !password) {
+    showAuthMessage('Please enter your email and password.', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = authMode === 'signin' ? 'Signing in…' : 'Creating account…';
+  clearAuthMessage();
+
+  try {
+    if (authMode === 'signin') {
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      // onAuthStateChange fires → closes the sheet automatically
+    } else {
+      const { error } = await db.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { display_name: name || email.split('@')[0] }
+        }
+      });
+      if (error) throw error;
+      showAuthMessage(
+        '✉️ Check your email to confirm your account, then come back and sign in.',
+        'success'
+      );
+      setAuthMode('signin');
+    }
+  } catch (err) {
+    showAuthMessage(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = authMode === 'signin' ? 'Sign in' : 'Create account';
+  }
+}
+
+// ── Sign out ─────────────────────────────────────────────
+async function signOut() {
+  await db.auth.signOut();
+  // onAuthStateChange fires → closes the sheet automatically
+}
+
+// ── Password reset ────────────────────────────────────────
+async function sendPasswordReset() {
+  const email = document.getElementById('authEmail').value.trim();
+  if (!email) {
+    showAuthMessage('Enter your email address first, then click Forgot password.', 'error');
+    return;
+  }
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  if (error) {
+    showAuthMessage(error.message, 'error');
+  } else {
+    showAuthMessage('Password reset email sent — check your inbox.', 'success');
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════
+// BUILT-IN DATA (your original 51 items — unchanged)
 // ══════════════════════════════════════════════════════════
 const BUILT_IN = [
   { id:'b1',  cat:'nourishment', emoji:'🚀', title:'Watch Star Trek Academy', sub:'To episode 5 at least', url:null },
@@ -285,71 +564,67 @@ const BUILT_IN = [
   { id:'b14', cat:'professional', emoji:'👁️', title:'Ways of Seeing — Episode 1', sub:'YouTube', url:'https://youtu.be/CZhJjP8kiqE?si=LSL0NY-qfWefHU1pk' },
   { id:'b15', cat:'professional', emoji:'👁️', title:'Ways of Seeing — Episode 2', sub:'YouTube', url:'https://youtu.be/juu8PRKEp-4?si=js8fPLSmVO-TdwxU' },
   { id:'b16', cat:'company',      emoji:'💬', title:'Gumption Club Discord', sub:'Join the community', url:'https://discord.gg/' },
-  { id:'b17', cat:'share', emoji:'🎥', title:'Funeral Industry Thoughts', sub:'YouTube video', url:'https://www.youtube.com/watch?v=XDkhzVw0yBs' },
-  { id:'b18', cat:'share', emoji:'✍️', title:'Funeral Industry (finish report first)', sub:'Write up your thoughts to share', url:null },
-  { id:'b19', cat:'share', emoji:'📺', title:'Video: Share', sub:'YouTube', url:'https://www.youtube.com/watch?v=F4Nv7mxoIGY' },
-  { id:'b20', cat:'share', emoji:'📝', title:'So You Want to Be a Strategist', sub:'Zoe Scaman — Substack', url:'https://zoescaman.substack.com/p/so-you-want-to-be-a-strategist' },
-  { id:'b21', cat:'share', emoji:'🐦', title:'Searching for Birds', sub:'Interactive visualisation', url:'https://searchingforbirds.visualcinnamon.com/' },
-  { id:'b22', cat:'share', emoji:'🎨', title:'OK Palette', sub:'Color tool — color.pizza', url:'https://okpalette.color.pizza/' },
-  { id:'b23', cat:'share', emoji:'🔧', title:'Fixing a Hole Short', sub:'YouTube Short', url:'https://youtube.com/shorts/gBrarORMkyA?si=PRT7aqW_ZaczOrqZ' },
-  { id:'b24', cat:'share', emoji:'📺', title:'Video: Share', sub:'YouTube', url:'https://youtu.be/dk4aTVko9ks?si=XwrwGLoisHC1D9tW' },
-  { id:'b25', cat:'share', emoji:'🧵', title:'Steven Cookson — Threads', sub:'Threads post', url:'https://www.threads.com/@steven.cookson/post/DUxuaDkjM38' },
-  { id:'b26', cat:'share', emoji:'📺', title:'Video: Share', sub:'YouTube', url:'https://youtu.be/i8a0pUaCGQU?si=Dne7wZKoWE3gg1TN' },
-  { id:'b27', cat:'share', emoji:'📺', title:'Short: Share', sub:'YouTube Shorts', url:'https://youtube.com/shorts/BHKHOJfJlmo?si=HVeIleGtpjWRyGOy' },
-  { id:'b28', cat:'share', emoji:'💼', title:'Channel 4 Sales — LinkedIn', sub:'March 2026 update', url:'https://www.linkedin.com/posts/channel4sales_reminder-from-1st-march-2026-every-activity-7429914681881923584-lLvb' },
-  { id:'b29', cat:'share', emoji:'📚', title:'Century Library', sub:'Unlock the library', url:'https://centurylibrary.com/unlock-the-library/' },
-  { id:'b30', cat:'share', emoji:'📱', title:'Instagram Reel: Share', sub:'Instagram', url:'https://www.instagram.com/reel/DTsizhajCaj/?igsh=eTBjN2R5NTI5MjRo' },
-  { id:'b31', cat:'share', emoji:'📺', title:'Video: Share', sub:'YouTube', url:'https://youtu.be/CU29lSOFLPU?si=nCSW5Ps-OQ7jJtNN' },
-  { id:'b32', cat:'share', emoji:'📺', title:'Short: Share', sub:'YouTube Shorts', url:'https://youtube.com/shorts/oXp_tXKtNNU?si=waRQ-QWxcCBQMFxF' },
-  { id:'b33', cat:'share', emoji:'📱', title:'Instagram Post: Share', sub:'Instagram', url:'https://www.instagram.com/p/DWmeXtUAUJx/?img_index=10' },
-  { id:'b34', cat:'share', emoji:'📰', title:'George Orwell & Tuberculosis — 1948', sub:'James Lind Library article', url:'https://www.jameslindlibrary.org/articles/down-and-almost-out-in-scotland-george-orwell-tuberculosis-and-getting-streptomycin-in-1948/' },
-  { id:'b35', cat:'ideas', emoji:'📢', title:'Quick Responses to Political Announcements', sub:'Or send a headline + points to mimi@sifted.eu', url:null },
-  { id:'b36', cat:'ideas', emoji:'🏛️', title:'Accessibility in Ancient History', sub:'Article or talk idea', url:null },
-  { id:'b37', cat:'ideas', emoji:'🎵', title:'"So You Want to Be Accessible?"', sub:'Cover of "Do You Want to Build a Snowman?"', url:null },
-  { id:'b38', cat:'ideas', emoji:'💀', title:"Let's Talk About Death Baby!", sub:'Content / talk concept', url:null },
-  { id:'b39', cat:'ideas', emoji:'🌍', title:'Bring in the Context!', sub:'Context-heavy, not self-referential. Pop culture, history, lived experience as the walls the ball bounces off.', url:null },
-  { id:'b40', cat:'ideas', emoji:'🎓', title:'Mass Social Education', sub:'"What have you learnt today?" — content series', url:null },
-  { id:'b41', cat:'ideas', emoji:'🔗', title:'Encourage Pattern Recognition', sub:'Art that shows material conditions in a broader historical through-line', url:null },
-  { id:'b42', cat:'ideas', emoji:'🌉', title:'Act as a Bridge, Not a Wall', sub:'Mass-producing cultural vocabulary — Soviet opera example. Give people conceptual frameworks.', url:null },
-  { id:'b43', cat:'ideas', emoji:'📚', title:'What Was the Last Thing You Did at the Library?', sub:'Content prompt / audience question', url:null },
-  { id:'b44', cat:'ideas', emoji:'📝', title:'Start with a Word Document', sub:'My genuine biggest accessibility tip — content idea', url:null },
-  { id:'b45', cat:'ideas', emoji:'👁️', title:'Pseudo Motion & Contrast', sub:'Can my contrast be too high? LinkedIn article by Gareth Slinn', url:'https://www.linkedin.com/posts/garethslinn_you-think-you-understand-accessible-colour-activity-7430279512262598656-tHC8' },
-  { id:'b46', cat:'ideas', emoji:'📕', title:'How to Build a Cult', sub:'Ethical marketing book idea', url:null },
-  { id:'b47', cat:'ideas', emoji:'✍️', title:'"Our Hard Work Making Other People Rich"', sub:'Doc of good messaging to write', url:null },
-  { id:'b48', cat:'ideas', emoji:'♿', title:'"You\'re Already Marketing to Disabled People"', sub:'…just not very well — talk/article concept', url:null },
-  { id:'b49', cat:'ideas', emoji:'📏', title:'Measure Success by Material Outcomes', sub:'Business and state success metric — to write about', url:null },
-  { id:'b50', cat:'ideas', emoji:'📊', title:'ATL / BTL / TTL / 360 IMC', sub:'Marketing frameworks explainer — notes to develop', url:null },
-  { id:'b51', cat:'ideas', emoji:'🛠️', title:'PDF Tag Viewer Tool', sub:'jeffbrand.ca — accessibility tool', url:'https://jeffbrand.ca/PDFTagViewer/' },
+  { id:'b17', cat:'share',        emoji:'🎥', title:'Funeral Industry Thoughts', sub:'YouTube video', url:'https://www.youtube.com/watch?v=XDkhzVw0yBs' },
+  { id:'b18', cat:'share',        emoji:'✍️', title:'Funeral Industry (finish report first)', sub:'Write up your thoughts to share', url:null },
+  { id:'b19', cat:'share',        emoji:'📺', title:'Video: Share', sub:'YouTube', url:'https://www.youtube.com/watch?v=F4Nv7mxoIGY' },
+  { id:'b20', cat:'share',        emoji:'📝', title:'So You Want to Be a Strategist', sub:'Zoe Scaman — Substack', url:'https://zoescaman.substack.com/p/so-you-want-to-be-a-strategist' },
+  { id:'b21', cat:'share',        emoji:'🐦', title:'Searching for Birds', sub:'Interactive visualisation', url:'https://searchingforbirds.visualcinnamon.com/' },
+  { id:'b22', cat:'share',        emoji:'🎨', title:'OK Palette', sub:'Color tool — color.pizza', url:'https://okpalette.color.pizza/' },
+  { id:'b23', cat:'share',        emoji:'🔧', title:'Fixing a Hole Short', sub:'YouTube Short', url:'https://youtube.com/shorts/gBrarORMkyA?si=PRT7aqW_ZaczOrqZ' },
+  { id:'b24', cat:'share',        emoji:'📺', title:'Video: Share', sub:'YouTube', url:'https://youtu.be/dk4aTVko9ks?si=XwrwGLoisHC1D9tW' },
+  { id:'b25', cat:'share',        emoji:'🧵', title:'Steven Cookson — Threads', sub:'Threads post', url:'https://www.threads.com/@steven.cookson/post/DUxuaDkjM38' },
+  { id:'b26', cat:'share',        emoji:'📺', title:'Video: Share', sub:'YouTube', url:'https://youtu.be/i8a0pUaCGQU?si=Dne7wZKoWE3gg1TN' },
+  { id:'b27', cat:'share',        emoji:'📺', title:'Short: Share', sub:'YouTube Shorts', url:'https://youtube.com/shorts/BHKHOJfJlmo?si=HVeIleGtpjWRyGOy' },
+  { id:'b28', cat:'share',        emoji:'💼', title:'Channel 4 Sales — LinkedIn', sub:'March 2026 update', url:'https://www.linkedin.com/posts/channel4sales_reminder-from-1st-march-2026-every-activity-7429914681881923584-lLvb' },
+  { id:'b29', cat:'share',        emoji:'📚', title:'Century Library', sub:'Unlock the library', url:'https://centurylibrary.com/unlock-the-library/' },
+  { id:'b30', cat:'share',        emoji:'📱', title:'Instagram Reel: Share', sub:'Instagram', url:'https://www.instagram.com/reel/DTsizhajCaj/?igsh=eTBjN2R5NTI5MjRo' },
+  { id:'b31', cat:'share',        emoji:'📺', title:'Video: Share', sub:'YouTube', url:'https://youtu.be/CU29lSOFLPU?si=nCSW5Ps-OQ7jJtNN' },
+  { id:'b32', cat:'share',        emoji:'📺', title:'Short: Share', sub:'YouTube Shorts', url:'https://youtube.com/shorts/oXp_tXKtNNU?si=waRQ-QWxcCBQMFxF' },
+  { id:'b33', cat:'share',        emoji:'📱', title:'Instagram Post: Share', sub:'Instagram', url:'https://www.instagram.com/p/DWmeXtUAUJx/?img_index=10' },
+  { id:'b34', cat:'share',        emoji:'📰', title:'George Orwell & Tuberculosis — 1948', sub:'James Lind Library article', url:'https://www.jameslindlibrary.org/articles/down-and-almost-out-in-scotland-george-orwell-tuberculosis-and-getting-streptomycin-in-1948/' },
+  { id:'b35', cat:'ideas',        emoji:'📢', title:'Quick Responses to Political Announcements', sub:'Or send a headline + points to mimi@sifted.eu', url:null },
+  { id:'b36', cat:'ideas',        emoji:'🏛️', title:'Accessibility in Ancient History', sub:'Article or talk idea', url:null },
+  { id:'b37', cat:'ideas',        emoji:'🎵', title:'"So You Want to Be Accessible?"', sub:'Cover of "Do You Want to Build a Snowman?"', url:null },
+  { id:'b38', cat:'ideas',        emoji:'💀', title:"Let's Talk About Death Baby!", sub:'Content / talk concept', url:null },
+  { id:'b39', cat:'ideas',        emoji:'🌍', title:'Bring in the Context!', sub:'Context-heavy, not self-referential. Pop culture, history, lived experience as the walls the ball bounces off.', url:null },
+  { id:'b40', cat:'ideas',        emoji:'🎓', title:'Mass Social Education', sub:'"What have you learnt today?" — content series', url:null },
+  { id:'b41', cat:'ideas',        emoji:'🔗', title:'Encourage Pattern Recognition', sub:'Art that shows material conditions in a broader historical through-line', url:null },
+  { id:'b42', cat:'ideas',        emoji:'🌉', title:'Act as a Bridge, Not a Wall', sub:'Mass-producing cultural vocabulary — Soviet opera example. Give people conceptual frameworks.', url:null },
+  { id:'b43', cat:'ideas',        emoji:'📚', title:'What Was the Last Thing You Did at the Library?', sub:'Content prompt / audience question', url:null },
+  { id:'b44', cat:'ideas',        emoji:'📝', title:'Start with a Word Document', sub:'My genuine biggest accessibility tip — content idea', url:null },
+  { id:'b45', cat:'ideas',        emoji:'👁️', title:'Pseudo Motion & Contrast', sub:'Can my contrast be too high? LinkedIn article by Gareth Slinn', url:'https://www.linkedin.com/posts/garethslinn_you-think-you-understand-accessible-colour-activity-7430279512262598656-tHC8' },
+  { id:'b46', cat:'ideas',        emoji:'📕', title:'How to Build a Cult', sub:'Ethical marketing book idea', url:null },
+  { id:'b47', cat:'ideas',        emoji:'✍️', title:'"Our Hard Work Making Other People Rich"', sub:'Doc of good messaging to write', url:null },
+  { id:'b48', cat:'ideas',        emoji:'♿', title:'"You\'re Already Marketing to Disabled People"', sub:'…just not very well — talk/article concept', url:null },
+  { id:'b49', cat:'ideas',        emoji:'📏', title:'Measure Success by Material Outcomes', sub:'Business and state success metric — to write about', url:null },
+  { id:'b50', cat:'ideas',        emoji:'📊', title:'ATL / BTL / TTL / 360 IMC', sub:'Marketing frameworks explainer — notes to develop', url:null },
+  { id:'b51', cat:'ideas',        emoji:'🛠️', title:'PDF Tag Viewer Tool', sub:'jeffbrand.ca — accessibility tool', url:'https://jeffbrand.ca/PDFTagViewer/' },
 ];
 
 const CATS = [
-  { id:'all',          label:'All',            emoji:'🗂️' },
-  { id:'nourishment',  label:'Nourishment',    emoji:'🌱' },
-  { id:'professional', label:'Professional',   emoji:'💼' },
-  { id:'company',      label:'Company',        emoji:'🏠' },
-  { id:'share',        label:'Share',          emoji:'📤' },
-  { id:'ideas',        label:'Ideas',          emoji:'💡' },
-  { id:'archive',      label:'Archive',        emoji:'📦', isArchive: true },
+  { id:'all',          label:'All',          emoji:'🗂️' },
+  { id:'nourishment',  label:'Nourishment',  emoji:'🌱' },
+  { id:'professional', label:'Professional', emoji:'💼' },
+  { id:'company',      label:'Company',      emoji:'🏠' },
+  { id:'share',        label:'Share',        emoji:'📤' },
+  { id:'ideas',        label:'Ideas',        emoji:'💡' },
+  { id:'archive',      label:'Archive',      emoji:'📦', isArchive: true },
 ];
 
 const EMOJI_MAP = { nourishment:'🌱', professional:'💼', company:'🏠', share:'📤', ideas:'💡' };
 
-// ══════════════════════════════════════════════════════════
-// STATE — all persisted to localStorage
-// ══════════════════════════════════════════════════════════
-let activeCat   = 'all';
-let showDone    = false;
 
-// custom items added by user
+// ══════════════════════════════════════════════════════════
+// STATE — persisted to localStorage (Phase 2: unchanged)
+// ══════════════════════════════════════════════════════════
+let activeCat = 'all';
+let showDone  = false;
+
 let customItems  = JSON.parse(localStorage.getItem('instead_custom')    || '[]');
-// overrides for any item (title, sub, url, notes)
 let overrides    = JSON.parse(localStorage.getItem('instead_overrides') || '{}');
-// archived items (full item snapshot + archivedAt)
-let archivedItems = JSON.parse(localStorage.getItem('instead_archive')  || '[]');
-// IDs of items that have been fully deleted (custom) or just removed from active (built-in)
+let archivedItems= JSON.parse(localStorage.getItem('instead_archive')   || '[]');
 let deletedIds   = new Set(JSON.parse(localStorage.getItem('instead_deleted') || '[]'));
 
-// pending done action
 let pendingDoneId = null;
 
 function save() {
@@ -359,10 +634,11 @@ function save() {
   localStorage.setItem('instead_deleted',   JSON.stringify([...deletedIds]));
 }
 
-// ── Item resolution (merge base + overrides) ──────────────
+
+// ── Item resolution ──────────────────────────────────────
 function resolveItem(base) {
   const ov = overrides[base.id] || {};
-  return { ...base, ...ov };   // overrides win
+  return { ...base, ...ov };
 }
 
 function allActiveItems() {
@@ -377,11 +653,12 @@ function viewItems() {
   return all.filter(i => i.cat === activeCat);
 }
 
+
 // ══════════════════════════════════════════════════════════
 // TABS
 // ══════════════════════════════════════════════════════════
 function renderTabs() {
-  const wrap = document.getElementById('tabs');
+  const wrap   = document.getElementById('tabs');
   const active = allActiveItems();
   wrap.innerHTML = CATS.map(c => {
     let count;
@@ -405,23 +682,20 @@ function setTab(id) {
   renderMain();
 }
 
+
 // ══════════════════════════════════════════════════════════
 // MAIN RENDER
 // ══════════════════════════════════════════════════════════
 function renderMain() {
-  const main = document.getElementById('main');
+  const main      = document.getElementById('main');
   const allActive = allActiveItems();
-  const total = allActive.length;
+  const total     = allActive.length;
   document.getElementById('headerCount').textContent =
     `${total} thing${total !== 1 ? 's' : ''} to explore`;
 
-  if (activeCat === 'archive') {
-    renderArchive(main);
-    return;
-  }
+  if (activeCat === 'archive') { renderArchive(main); return; }
 
   const items = viewItems();
-
   if (items.length === 0) {
     main.innerHTML = `<div class="empty"><div class="empty-icon">✨</div><h3>All clear!</h3><p>Nothing here yet. Tap + to add something.</p></div>`;
     return;
@@ -438,10 +712,10 @@ function renderArchive(main) {
     return;
   }
   let html = `<div class="section-divider">${archivedItems.length} archived</div>`;
-  // newest first
   [...archivedItems].reverse().forEach(item => { html += archivedCardHTML(item); });
   main.innerHTML = html;
 }
+
 
 // ══════════════════════════════════════════════════════════
 // CARD HTML
@@ -451,12 +725,11 @@ function esc(str) {
 }
 
 function cardHTML(item) {
-  const notes = overrides[item.id]?.notes || '';
+  const notes   = overrides[item.id]?.notes || '';
   const openBtn = item.url
     ? `<a class="btn-open" href="${esc(item.url)}" target="_blank" rel="noopener">Open →</a>` : '';
   const notesHtml = notes
     ? `<div class="card-notes">${esc(notes)}</div>` : '';
-
   return `<div class="card" id="card-${item.id}">
     <div class="card-emoji">${item.emoji || '📌'}</div>
     <div class="card-body">
@@ -476,14 +749,13 @@ function cardHTML(item) {
 }
 
 function archivedCardHTML(item) {
-  const notes = item.notes || overrides[item.id]?.notes || '';
+  const notes   = item.notes || overrides[item.id]?.notes || '';
   const openBtn = item.url
     ? `<a class="btn-open" href="${esc(item.url)}" target="_blank" rel="noopener">Open →</a>` : '';
   const notesHtml = notes
     ? `<div class="card-notes">${esc(notes)}</div>` : '';
   const date = item.archivedAt
     ? new Date(item.archivedAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '';
-
   return `<div class="card archived" id="arc-${item.id}">
     <div class="card-emoji">${item.emoji || '📌'}</div>
     <div class="card-body">
@@ -500,38 +772,34 @@ function archivedCardHTML(item) {
   </div>`;
 }
 
+
 // ══════════════════════════════════════════════════════════
 // DONE PROMPT
 // ══════════════════════════════════════════════════════════
 function promptDone(id) {
-  const items = allActiveItems();
-  const item = items.find(i => i.id === id);
+  const item = allActiveItems().find(i => i.id === id);
   if (!item) return;
   pendingDoneId = id;
   document.getElementById('doneEmoji').textContent = item.emoji || '📌';
   document.getElementById('doneTitle').textContent = item.title;
-  document.getElementById('doneSub').textContent = item.sub || '';
+  document.getElementById('doneSub').textContent   = item.sub || '';
   openSheet('doneSheet');
 }
 
 function confirmArchive() {
   if (!pendingDoneId) return;
   const items = [...BUILT_IN, ...customItems].map(resolveItem);
-  const item = items.find(i => i.id === pendingDoneId);
+  const item  = items.find(i => i.id === pendingDoneId);
   if (!item) return;
   const notes = overrides[pendingDoneId]?.notes || '';
   archivedItems.push({ ...item, notes, archivedAt: new Date().toISOString() });
-  // Remove from active: for custom items, delete; for built-in, mark deleted
   if (pendingDoneId.startsWith('c')) {
     customItems = customItems.filter(i => i.id !== pendingDoneId);
   } else {
     deletedIds.add(pendingDoneId);
   }
   pendingDoneId = null;
-  save();
-  closeSheet('doneSheet');
-  renderTabs();
-  renderMain();
+  save(); closeSheet('doneSheet'); renderTabs(); renderMain();
 }
 
 function confirmDelete() {
@@ -543,10 +811,7 @@ function confirmDelete() {
   }
   delete overrides[pendingDoneId];
   pendingDoneId = null;
-  save();
-  closeSheet('doneSheet');
-  renderTabs();
-  renderMain();
+  save(); closeSheet('doneSheet'); renderTabs(); renderMain();
 }
 
 function restoreFromArchive(id) {
@@ -554,23 +819,19 @@ function restoreFromArchive(id) {
   if (idx === -1) return;
   const item = archivedItems[idx];
   archivedItems.splice(idx, 1);
-  // Re-activate: remove from deletedIds, re-add custom items
   deletedIds.delete(id);
   if (id.startsWith('c') && !customItems.find(i => i.id === id)) {
     customItems.push({ id: item.id, cat: item.cat, emoji: item.emoji, title: item.title, sub: item.sub, url: item.url });
   }
-  save();
-  renderTabs();
-  renderMain();
+  save(); renderTabs(); renderMain();
 }
 
 function deleteFromArchive(id) {
   archivedItems = archivedItems.filter(i => i.id !== id);
   delete overrides[id];
-  save();
-  renderTabs();
-  renderMain();
+  save(); renderTabs(); renderMain();
 }
+
 
 // ══════════════════════════════════════════════════════════
 // EDIT ITEM
@@ -578,16 +839,15 @@ function deleteFromArchive(id) {
 let editingId = null;
 
 function openEdit(id) {
-  const items = allActiveItems();
-  const item = items.find(i => i.id === id);
+  const item = allActiveItems().find(i => i.id === id);
   if (!item) return;
   editingId = id;
   document.getElementById('editHeading').textContent = 'Edit: ' + item.title.slice(0, 30);
-  document.getElementById('editTitle').value = item.title;
-  document.getElementById('editSub').value   = item.sub || '';
-  document.getElementById('editNotes').value = overrides[id]?.notes || '';
-  document.getElementById('editUrl').value   = item.url || '';
-  document.getElementById('editCat').value   = item.cat;
+  document.getElementById('editTitle').value  = item.title;
+  document.getElementById('editSub').value    = item.sub || '';
+  document.getElementById('editNotes').value  = overrides[id]?.notes || '';
+  document.getElementById('editUrl').value    = item.url || '';
+  document.getElementById('editCat').value    = item.cat;
   openSheet('editSheet');
   setTimeout(() => document.getElementById('editTitle').focus(), 100);
 }
@@ -598,7 +858,6 @@ function submitEdit() {
   if (!title) { document.getElementById('editTitle').focus(); return; }
   let url = document.getElementById('editUrl').value.trim();
   if (url && !url.startsWith('http')) url = 'https://' + url;
-
   overrides[editingId] = {
     ...(overrides[editingId] || {}),
     title,
@@ -607,21 +866,14 @@ function submitEdit() {
     url:   url || null,
     cat:   document.getElementById('editCat').value,
   };
-
-  // If it's a custom item, update the base too so cat changes work
   if (editingId.startsWith('c')) {
     const idx = customItems.findIndex(i => i.id === editingId);
-    if (idx !== -1) {
-      customItems[idx].cat = document.getElementById('editCat').value;
-    }
+    if (idx !== -1) customItems[idx].cat = document.getElementById('editCat').value;
   }
-
   editingId = null;
-  save();
-  closeSheet('editSheet');
-  renderTabs();
-  renderMain();
+  save(); closeSheet('editSheet'); renderTabs(); renderMain();
 }
+
 
 // ══════════════════════════════════════════════════════════
 // ADD ITEM
@@ -644,18 +896,16 @@ function submitAdd() {
   const cat   = document.getElementById('addCat').value;
   const notes = document.getElementById('addNotes').value.trim();
   const sub   = document.getElementById('addSub').value.trim();
-
-  const id = 'c' + Date.now();
+  const id    = 'c' + Date.now();
   customItems.push({ id, cat, emoji: EMOJI_MAP[cat] || '📌', title, sub: sub || null, url: url || null });
   if (notes) overrides[id] = { notes };
-
   save();
   closeSheet('addSheet');
   activeCat = cat;
-  renderTabs();
-  renderMain();
+  renderTabs(); renderMain();
   document.getElementById('main').scrollTop = 0;
 }
+
 
 // ══════════════════════════════════════════════════════════
 // SURPRISE
@@ -674,12 +924,13 @@ function openSurprise() {
   lastSurpriseId = item.id;
   document.getElementById('sEmoji').textContent = item.emoji || '📌';
   document.getElementById('sTitle').textContent = item.title;
-  document.getElementById('sSub').textContent = item.sub || '';
+  document.getElementById('sSub').textContent   = item.sub || '';
   const link = document.getElementById('sLink');
   link.href = item.url;
   link.style.display = 'block';
   openSheet('surpriseSheet');
 }
+
 
 // ══════════════════════════════════════════════════════════
 // SHEET HELPERS
@@ -689,9 +940,9 @@ function openSheet(id) {
   document.getElementById(id).classList.add('open');
   document.body.style.overflow = 'hidden';
 }
-
 function closeSheet(id) {
-  document.getElementById(id).classList.remove('open');
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('open');
   document.body.style.overflow = '';
 }
 
@@ -705,10 +956,12 @@ document.addEventListener('keydown', e => {
     document.querySelectorAll('.sheet.open').forEach(el => closeSheet(el.id));
   }
   if (e.key === 'Enter') {
-    if (document.getElementById('addSheet').classList.contains('open') && document.activeElement.tagName !== 'TEXTAREA') submitAdd();
+    if (document.getElementById('addSheet').classList.contains('open')  && document.activeElement.tagName !== 'TEXTAREA') submitAdd();
     if (document.getElementById('editSheet').classList.contains('open') && document.activeElement.tagName !== 'TEXTAREA') submitEdit();
+    if (document.getElementById('authSheet').classList.contains('open') && document.activeElement.tagName !== 'TEXTAREA') submitAuth();
   }
 });
+
 
 // ══════════════════════════════════════════════════════════
 // BACKUP DATA
@@ -717,9 +970,7 @@ function backupData() {
   const backup = {
     exportedAt: new Date().toISOString(),
     version: 2,
-    customItems,
-    overrides,
-    archivedItems,
+    customItems, overrides, archivedItems,
     deletedIds: [...deletedIds],
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -732,8 +983,9 @@ function backupData() {
   URL.revokeObjectURL(url);
 }
 
+
 // ══════════════════════════════════════════════════════════
-// SERVICE WORKER REGISTRATION
+// SERVICE WORKER
 // ══════════════════════════════════════════════════════════
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -743,8 +995,8 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ── INIT ──────────────────────────────────────────────────
-// ══════════════════════════════════════════════════════════
+
+// ── INIT ────────────────────────────────────────────────
 renderTabs();
 renderMain();
 </script>
