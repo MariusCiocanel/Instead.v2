@@ -1,0 +1,164 @@
+/* Instead Design System — CSS Custom Properties */
+
+/* ─── Colour Palette ─── */
+:root {
+  --color-leaf-700: #4F654D;
+  --color-leaf-500: #6C7D67;
+  --color-moss-300: #B7C2B0;
+  --color-pear-100: #F5F2E8;
+  --color-parchment: #FAF9F6;
+  --color-ink-900: #1E1E1E;
+  --color-ink-700: #444444;
+  --color-ink-500: #6B6B6B;
+  --color-focus: #2D6CDF;
+
+  --color-success: #2E6A44;
+  --color-warning: #8A5B00;
+  --color-error: #A53030;
+  --color-info: #1F5A8A;
+}
+
+/* ─── Light Theme (default) ─── */
+:root {
+  --bg: var(--color-parchment);
+  --surface: var(--color-pear-100);
+  --surface-elevated: #FFFFFF;
+  --border: var(--color-moss-300);
+  --border-strong: var(--color-leaf-500);
+
+  --text-primary: var(--color-ink-900);
+  --text-secondary: var(--color-ink-700);
+  --text-muted: var(--color-ink-500);
+  --text-inverse: #FFFFFF;
+
+  --primary: var(--color-leaf-700);
+  --primary-hover: #415541;
+  --primary-active: #364838;
+  --secondary: var(--color-leaf-500);
+
+  --semantic-success: var(--color-success);
+  --semantic-warning: var(--color-warning);
+  --semantic-error: var(--color-error);
+  --semantic-info: var(--color-info);
+
+  --disabled: #CFCFCF;
+  --focus-ring: var(--color-focus);
+}
+
+/* ─── Dark Theme ─── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141614;
+    --surface: #1E221E;
+    --surface-elevated: #252A25;
+    --border: #3A423A;
+    --border-strong: var(--color-leaf-500);
+
+    --text-primary: #F7F6F2;
+    --text-secondary: #D6D9D2;
+    --text-muted: #9DA89A;
+    --text-inverse: #1E1E1E;
+
+    --primary: #6C9469;
+    --primary-hover: #7DAA7A;
+    --primary-active: #8EBE8B;
+    --secondary: #8FA38C;
+
+    --semantic-success: #4CAF72;
+    --semantic-warning: #E8A020;
+    --semantic-error: #E05555;
+    --semantic-info: #4A8FD4;
+
+    --disabled: #4A4E4A;
+    --focus-ring: #5B91F4;
+  }
+}
+
+/* ─── Typography ─── */
+:root {
+  --font-logo: 'Caveat', cursive;
+  --font-heading: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --text-display: 64px;
+  --text-h1: 48px;
+  --text-h2: 40px;
+  --text-h3: 32px;
+  --text-h4: 24px;
+  --text-h5: 20px;
+  --text-h6: 18px;
+  --text-body-lg: 18px;
+  --text-body: 16px;
+  --text-small: 14px;
+  --text-caption: 12px;
+
+  --leading-display: 72px;
+  --leading-h1: 56px;
+  --leading-h2: 48px;
+  --leading-h3: 40px;
+  --leading-h4: 32px;
+  --leading-h5: 28px;
+  --leading-h6: 28px;
+  --leading-body-lg: 32px;
+  --leading-body: 28px;
+  --leading-small: 24px;
+  --leading-caption: 20px;
+}
+
+/* ─── Spacing ─── */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+}
+
+/* ─── Radius ─── */
+:root {
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}
+
+/* ─── Elevation ─── */
+:root {
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .08);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, .10);
+  --shadow-3: 0 8px 24px rgba(0, 0, 0, .12);
+}
+
+/* ─── Motion ─── */
+:root {
+  --motion-press: 75ms;
+  --motion-fast: 100ms;
+  --motion-medium: 150ms;
+  --motion-slow: 200ms;
+}
+
+/* ─── Focus Ring ─── */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ─── Reduced Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
