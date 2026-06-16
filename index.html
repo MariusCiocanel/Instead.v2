@@ -111,6 +111,21 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 }
 .user-sync-row strong { display: block; margin-bottom: 2px; font-size: 14px; }
 
+/* ── RECENTLY DELETED ── */
+.rd-section { margin-bottom: 16px; }
+.rd-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint); margin-bottom: 4px; }
+.rd-hint { font-size: 12px; color: var(--ink-faint); margin-bottom: 10px; line-height: 1.4; }
+.rd-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--cream-dark); }
+.rd-emoji { font-size: 18px; flex-shrink: 0; }
+.rd-body { flex: 1; min-width: 0; }
+.rd-title { font-size: 14px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rd-meta { font-size: 11px; color: var(--ink-faint); margin-top: 1px; }
+.rd-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.rd-btn { padding: 5px 10px; border-radius: 14px; font-family: var(--font-body); font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--cream-dark); background: transparent; color: var(--ink-light); transition: all 0.15s; }
+.rd-btn:hover { background: var(--cream-dark); }
+.rd-btn.danger { color: var(--terra); border-color: #F0C4BB; }
+.rd-btn.danger:hover { background: #FDF0EE; }
+
 /* ── TABS ── */
 .tabs-wrap { flex-shrink: 0; background: var(--cream); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; border-bottom: 1.5px solid var(--cream-dark); }
 .tabs-wrap::-webkit-scrollbar { display: none; }
@@ -398,9 +413,11 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
     </div>
 
     <div class="user-sync-row">
-      <strong>☁️ Cloud sync coming next</strong>
-      Your items are still saved locally. Once the data layer is connected, everything will sync automatically.
+      <strong>☁️ Synced to your account</strong>
+      Your items are saved to Instead and sync across your devices.
     </div>
+
+    <div id="recentlyDeletedSection"></div>
 
     <div class="sheet-actions">
       <button class="btn-sheet-danger" onclick="signOut()">Sign out</button>
@@ -693,7 +710,54 @@ function openUserMenu() {
   const name = currentUser.user_metadata?.display_name || currentUser.email || '?';
   document.getElementById('userAvatarLg').textContent = name[0].toUpperCase();
   document.getElementById('userEmailText').textContent = currentUser.email;
+  renderRecentlyDeleted();
   openSheet('userSheet');
+}
+
+// ── Recently Deleted (cloud only) ────────────────────────
+function daysLeft(deletedAt) {
+  const elapsed = Date.now() - new Date(deletedAt).getTime();
+  return Math.max(0, PURGE_DAYS - Math.floor(elapsed / 86400000));
+}
+
+function renderRecentlyDeleted() {
+  const el = document.getElementById('recentlyDeletedSection');
+  if (!el) return;
+  const deleted = getDeletedItems();
+  if (deleted.length === 0) { el.innerHTML = ''; return; }
+
+  const rows = deleted.map(it => {
+    const left = daysLeft(it.deleted_at);
+    return `<div class="rd-item">
+      <span class="rd-emoji">${it.emoji || '🗑️'}</span>
+      <div class="rd-body">
+        <div class="rd-title">${esc(it.title)}</div>
+        <div class="rd-meta">${left} day${left !== 1 ? 's' : ''} left</div>
+      </div>
+      <div class="rd-actions">
+        <button class="rd-btn" onclick="restoreDeleted('${it.id}')">Restore</button>
+        <button class="rd-btn danger" onclick="hardDeleteItem('${it.id}')">Delete forever</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `<div class="rd-section">
+    <div class="rd-header">🗑️ Recently deleted</div>
+    <div class="rd-hint">Items stay here for ${PURGE_DAYS} days, then they're removed permanently.</div>
+    ${rows}
+  </div>`;
+}
+
+function restoreDeleted(id) {
+  cloudUpdateRow(id, { status: 'active', deleted_at: null });
+  renderRecentlyDeleted();
+}
+
+async function hardDeleteItem(id) {
+  cloudItems = cloudItems.filter(i => i.id !== id);   // optimistic remove
+  renderRecentlyDeleted(); renderTabs(); renderMain();
+  const { error } = await db.from('items').delete().eq('id', id);
+  if (error) showToast('Couldn’t delete permanently — try again.', 'error');
 }
 
 function showAuthMessage(text, type) {
