@@ -9,9 +9,12 @@ live Supabase project.
   for Phase 3/Phase 4 sharing tables. It replaces recursive cross-table policy
   checks with `SECURITY DEFINER` helper functions, then recreates the `lists`,
   `list_items`, and `list_shares` policies from the live project.
+- `migrations/20260616_phase4_sharing.sql` adds Phase 4 sharing helpers, RLS
+  updates, invite RPCs, viewer/editor permissions, public list reads, and the
+  minimum list/share columns used by the static app.
 
 Apply these migrations to a fresh Supabase project after the base tables exist
-and before building or testing Phase 4 sharing.
+and before testing Phase 4 sharing.
 
 ## Verification Queries
 

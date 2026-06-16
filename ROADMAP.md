@@ -47,6 +47,10 @@ Relevant commits on `main`: `bb4c20c` (scaffolding) → `750e0b4` (seed/fetch/pu
 Schema exists (`lists`, `list_items`, `list_shares`). RLS foundation is sound (the
 `SECURITY DEFINER` helpers) — build on those, do NOT reintroduce cross-table policy subqueries.
 
+_Implementation note: Phase 4 sharing has been added in `index.html` and
+`supabase/migrations/20260616_phase4_sharing.sql`. Live Supabase migration and
+end-to-end verification are still required before marking it shipped._
+
 6. **Lists data layer** — CRUD for `lists` (create/rename/delete, `is_public`, `share_slug`), cloud-only.
 7. **Lists UI** — a surface (sheet or tab) to view/create/manage lists.
 8. **Add/remove items to lists** — `list_items` writes + an "Add to list" affordance on cards.

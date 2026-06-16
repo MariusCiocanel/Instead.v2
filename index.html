@@ -126,6 +126,30 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 .rd-btn.danger { color: var(--terra); border-color: #F0C4BB; }
 .rd-btn.danger:hover { background: #FDF0EE; }
 
+/* ── LISTS ── */
+.list-toolbar { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.list-heading { font-family: var(--font-head); font-size: 22px; font-weight: 700; color: var(--ink); }
+.list-stack { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.list-row { background: var(--card); border: 1.5px solid var(--cream-dark); border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: var(--shadow); }
+.list-row-main { min-width: 0; flex: 1; cursor: pointer; }
+.list-title { font-size: 15px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-meta { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+.list-badge { display: inline-flex; align-items: center; border-radius: 14px; padding: 3px 8px; background: var(--cream-dark); color: var(--ink-light); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.list-badge.public { background: #edfaf3; color: var(--forest); }
+.list-badge.editor { background: var(--amber-bg); color: var(--amber); }
+.list-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.list-mini-btn { padding: 6px 10px; border-radius: 16px; border: 1.5px solid var(--cream-dark); background: transparent; color: var(--ink-light); font-family: var(--font-body); font-size: 12px; font-weight: 700; cursor: pointer; }
+.list-mini-btn:hover { background: var(--cream-dark); }
+.list-mini-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.list-mini-btn.danger { color: var(--terra); border-color: #F0C4BB; }
+.list-item-remove { margin-left: auto; }
+.pending-share { border-color: var(--amber-border); background: var(--amber-bg); }
+.member-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--cream-dark); }
+.member-row code { flex: 1; min-width: 0; font-size: 11px; color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; }
+.member-row select { max-width: 110px; padding: 7px; border: 1.5px solid var(--cream-dark); border-radius: 8px; background: var(--cream); font-family: var(--font-body); }
+.copy-row { display: flex; gap: 8px; margin: 10px 0 14px; }
+.copy-row input { flex: 1; min-width: 0; padding: 10px 12px; border: 1.5px solid var(--cream-dark); border-radius: 10px; background: var(--cream); color: var(--ink-light); font-family: var(--font-body); font-size: 13px; }
+
 /* ── TABS ── */
 .tabs-wrap { flex-shrink: 0; background: var(--cream); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; border-bottom: 1.5px solid var(--cream-dark); }
 .tabs-wrap::-webkit-scrollbar { display: none; }
@@ -429,6 +453,43 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
   </div>
 </div>
 
+<!-- ── LIST MANAGER SHEET ── -->
+<div class="sheet" id="listSheet">
+  <div class="sheet-card">
+    <div class="form-h2" id="listSheetHeading">New list</div>
+    <div class="form-group">
+      <label>List name</label>
+      <input type="text" id="listTitleInput" placeholder="Weekend reads" />
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:14px;">
+        <input type="checkbox" id="listPublicInput" style="width:auto;" />
+        Make this list public
+      </label>
+    </div>
+    <div id="listLinkSection"></div>
+    <div id="listInviteSection"></div>
+    <div id="listMembersSection"></div>
+    <div class="form-actions">
+      <button class="btn-form-cancel" onclick="closeSheet('listSheet')">Close</button>
+      <button class="btn-form-submit" onclick="saveListFromSheet()">Save List</button>
+    </div>
+    <button class="btn-sheet-danger" id="deleteListBtn" onclick="deleteCurrentList()" style="display:none;width:100%;margin-top:10px;">Delete list</button>
+  </div>
+</div>
+
+<!-- ── ADD TO LIST SHEET ── -->
+<div class="sheet" id="addToListSheet">
+  <div class="sheet-card">
+    <div class="form-h2">Add to list</div>
+    <div class="sheet-sub" id="addToListItemTitle"></div>
+    <div class="list-stack" id="addToListOptions"></div>
+    <div class="sheet-actions">
+      <button class="btn-sheet-ghost" onclick="closeSheet('addToListSheet')">Close</button>
+    </div>
+  </div>
+</div>
+
 
 <script>
 // ══════════════════════════════════════════════════════════
@@ -442,6 +503,16 @@ const db = createClient(
 
 // ── Auth state ───────────────────────────────────────────
 let currentUser = null;
+let cloudItems = [];
+let cloudReady = false;
+let cloudLists = [];
+let cloudListItems = [];
+let cloudShares = [];
+let cloudListContentItems = [];
+let selectedListId = null;
+let editingListId = null;
+let pendingListItemId = null;
+let publicListView = null;
 
 // Fires on every auth change, including INITIAL_SESSION on page load
 db.auth.onAuthStateChange((event, session) => {
@@ -454,12 +525,13 @@ db.auth.onAuthStateChange((event, session) => {
     if (currentUser) {
       syncOnLogin();           // seed / migrate / fetch from Supabase
     } else {
-      renderTabs(); renderMain(); // INITIAL_SESSION with no session → guest
+      handleHashRoute();       // public list route, or guest mode if no route
     }
   } else if (event === 'SIGNED_OUT') {
     cloudReady = false;        // revert to localStorage / guest mode
     cloudItems = [];
-    renderTabs(); renderMain();
+    resetCloudLists();
+    handleHashRoute();
   }
 });
 
@@ -495,12 +567,14 @@ async function syncOnLogin() {
     }
 
     cloudItems = rows;
+    await fetchCloudLists();
     cloudReady = true;
-    renderTabs(); renderMain();
+    await handleHashRoute();
   } catch (err) {
     console.error('Cloud sync failed:', err);
     showToast('Couldn’t load your items — showing local data.', 'error');
     cloudReady = false;                      // fall back to guest/local view
+    if (activeCat === 'lists') activeCat = 'all';
     renderTabs(); renderMain();
   } finally {
     syncInFlight = false;
@@ -515,6 +589,47 @@ async function fetchItems() {
     .order('created_at', { ascending: true });
   if (error) throw error;
   return data || [];
+}
+
+async function fetchCloudLists() {
+  if (!currentUser) { resetCloudLists(); return; }
+
+  const [listsRes, listItemsRes, sharesRes] = await Promise.all([
+    db.from('lists').select('*'),
+    db.from('list_items').select('*'),
+    db.from('list_shares').select('*')
+  ]);
+
+  if (listsRes.error) throw listsRes.error;
+  if (listItemsRes.error) throw listItemsRes.error;
+  if (sharesRes.error) throw sharesRes.error;
+
+  cloudLists = (listsRes.data || []).sort((a, b) => listTitle(a).localeCompare(listTitle(b)));
+  cloudListItems = listItemsRes.data || [];
+  cloudShares = sharesRes.data || [];
+  const itemIds = [...new Set(cloudListItems.map(li => li.item_id).filter(Boolean))];
+  if (itemIds.length) {
+    const { data, error } = await db.from('items').select('*').in('id', itemIds);
+    if (error) throw error;
+    cloudListContentItems = data || [];
+  } else {
+    cloudListContentItems = [];
+  }
+}
+
+function resetCloudLists() {
+  cloudLists = [];
+  cloudListItems = [];
+  cloudShares = [];
+  cloudListContentItems = [];
+  selectedListId = null;
+  if (activeCat === 'lists') activeCat = 'all';
+}
+
+async function refreshCloudLists() {
+  await fetchCloudLists();
+  renderTabs();
+  renderMain();
 }
 
 async function seedBuiltins(uid) {
@@ -665,6 +780,325 @@ async function cloudUpdateRow(id, patch, errMsg = 'Couldn’t sync that change �
 
 function cloudEdit(id, patch) {
   return cloudUpdateRow(id, patch, 'Couldn’t save your changes — try again.');
+}
+
+// ══════════════════════════════════════════════════════════
+// LISTS + SHARING (Phase 4)
+// ══════════════════════════════════════════════════════════
+function openListView(id) {
+  selectedListId = id;
+  activeCat = 'lists';
+  publicListView = null;
+  renderTabs();
+  renderMain();
+}
+
+function closeListView() {
+  selectedListId = null;
+  renderMain();
+}
+
+function openListSheet(id = null) {
+  if (!isCloud()) { openAuthPanel(); return; }
+  const list = id ? cloudLists.find(l => l.id === id) : null;
+  if (id && (!list || !isListOwner(list))) return;
+  editingListId = id;
+  document.getElementById('listSheetHeading').textContent = list ? 'Manage list' : 'New list';
+  document.getElementById('listTitleInput').value = list ? listTitle(list) : '';
+  document.getElementById('listPublicInput').checked = !!list?.is_public;
+  document.getElementById('deleteListBtn').style.display = list ? 'block' : 'none';
+  renderListSheetSections(list);
+  openSheet('listSheet');
+  setTimeout(() => document.getElementById('listTitleInput').focus(), 100);
+}
+
+function renderListSheetSections(list) {
+  const linkEl = document.getElementById('listLinkSection');
+  const inviteEl = document.getElementById('listInviteSection');
+  const membersEl = document.getElementById('listMembersSection');
+  if (!list) {
+    linkEl.innerHTML = '';
+    inviteEl.innerHTML = '';
+    membersEl.innerHTML = '';
+    return;
+  }
+
+  const url = list.share_slug ? publicListUrl(list) : '';
+  linkEl.innerHTML = `<div class="form-group">
+    <label>Share link</label>
+    <div class="copy-row">
+      <input id="listShareUrl" readonly value="${esc(url || 'Save this list to create a link')}" />
+      <button class="list-mini-btn" onclick="copyListLink('${list.id}')">Copy</button>
+    </div>
+  </div>`;
+
+  inviteEl.innerHTML = `<div class="form-group">
+    <label>Email invite</label>
+    <input type="email" id="inviteEmailInput" placeholder="person@example.com" />
+  </div>
+  <div class="form-group">
+    <label>Permission</label>
+    <select id="invitePermissionInput">
+      <option value="viewer">Viewer</option>
+      <option value="editor">Editor</option>
+    </select>
+  </div>
+  <button class="btn-sheet-secondary" style="width:100%;margin-bottom:14px;" onclick="sendListInvite('${list.id}')">Send invite</button>`;
+
+  const shares = cloudShares.filter(s => s.list_id === list.id);
+  if (!shares.length) {
+    membersEl.innerHTML = `<div class="rd-hint">No members yet.</div>`;
+    return;
+  }
+  membersEl.innerHTML = `<div class="rd-header">Members</div>` + shares.map(s => `
+    <div class="member-row">
+      <code>${esc(s.shared_with || 'unknown')}</code>
+      <select onchange="updateSharePermission('${s.id}', this.value)">
+        <option value="viewer"${s.permission === 'viewer' ? ' selected' : ''}>Viewer</option>
+        <option value="editor"${s.permission === 'editor' ? ' selected' : ''}>Editor</option>
+      </select>
+      <span class="list-badge">${s.accepted ? 'Accepted' : 'Pending'}</span>
+      <button class="list-mini-btn danger" onclick="removeShare('${s.id}')">Remove</button>
+    </div>`).join('');
+}
+
+async function saveListFromSheet() {
+  if (!isCloud()) return;
+  const title = document.getElementById('listTitleInput').value.trim();
+  if (!title) { document.getElementById('listTitleInput').focus(); return; }
+  const is_public = document.getElementById('listPublicInput').checked;
+  const existing = editingListId ? cloudLists.find(l => l.id === editingListId) : null;
+  const share_slug = existing?.share_slug || generateShareSlug();
+
+  if (existing) {
+    const { error } = await db.from('lists')
+      .update({ title, is_public, share_slug })
+      .eq('id', existing.id);
+    if (error) { showToast('Couldn’t save the list.', 'error'); return; }
+    showToast('List saved.', 'success');
+  } else {
+    const { data, error } = await db.from('lists')
+      .insert({ owner_id: currentUser.id, title, is_public, share_slug })
+      .select()
+      .single();
+    if (error) { showToast('Couldn’t create the list.', 'error'); return; }
+    selectedListId = data.id;
+    activeCat = 'lists';
+    showToast('List created.', 'success');
+  }
+
+  closeSheet('listSheet');
+  await refreshCloudLists();
+}
+
+async function deleteCurrentList() {
+  const list = editingListId ? cloudLists.find(l => l.id === editingListId) : null;
+  if (!list || !isListOwner(list)) return;
+  if (!confirm(`Delete "${listTitle(list)}"? This removes the list, not the items inside it.`)) return;
+  await db.from('list_items').delete().eq('list_id', list.id);
+  await db.from('list_shares').delete().eq('list_id', list.id);
+  const { error } = await db.from('lists').delete().eq('id', list.id);
+  if (error) { showToast('Couldn’t delete the list.', 'error'); return; }
+  selectedListId = null;
+  editingListId = null;
+  closeSheet('listSheet');
+  await refreshCloudLists();
+  showToast('List deleted.', 'success');
+}
+
+async function ensureListSlug(list) {
+  if (list.share_slug) return list.share_slug;
+  const share_slug = generateShareSlug();
+  const { error } = await db.from('lists').update({ share_slug }).eq('id', list.id);
+  if (error) throw error;
+  list.share_slug = share_slug;
+  return share_slug;
+}
+
+async function copyListLink(id) {
+  const list = cloudLists.find(l => l.id === id);
+  if (!list) return;
+  try {
+    await ensureListSlug(list);
+    const url = publicListUrl(list);
+    await navigator.clipboard.writeText(url);
+    const input = document.getElementById('listShareUrl');
+    if (input) input.value = url;
+    showToast('Link copied.', 'success');
+  } catch (err) {
+    console.error('Copy failed:', err);
+    showToast('Couldn’t copy the link.', 'error');
+  }
+}
+
+async function sendListInvite(listId) {
+  const email = document.getElementById('inviteEmailInput').value.trim();
+  const permission = document.getElementById('invitePermissionInput').value;
+  if (!email) { document.getElementById('inviteEmailInput').focus(); return; }
+  const { error } = await db.rpc('create_list_share_by_email', {
+    p_list_id: listId,
+    p_email: email,
+    p_permission: permission
+  });
+  if (error) { showToast(error.message || 'Couldn’t send invite.', 'error'); return; }
+  await fetchCloudLists();
+  renderListSheetSections(cloudLists.find(l => l.id === listId));
+  renderTabs(); renderMain();
+  showToast('Invite sent.', 'success');
+}
+
+async function updateSharePermission(shareId, permission) {
+  const { error } = await db.from('list_shares').update({ permission }).eq('id', shareId);
+  if (error) { showToast('Couldn’t update permission.', 'error'); return; }
+  await fetchCloudLists();
+  const list = editingListId ? cloudLists.find(l => l.id === editingListId) : null;
+  renderListSheetSections(list);
+  renderTabs(); renderMain();
+}
+
+async function removeShare(shareId) {
+  const { error } = await db.from('list_shares').delete().eq('id', shareId);
+  if (error) { showToast('Couldn’t remove member.', 'error'); return; }
+  await fetchCloudLists();
+  const list = editingListId ? cloudLists.find(l => l.id === editingListId) : null;
+  renderListSheetSections(list);
+  renderTabs(); renderMain();
+}
+
+async function acceptPendingShare(shareId) {
+  const { data, error } = await db.rpc('accept_list_share', { p_share_id: shareId });
+  if (error) { showToast(error.message || 'Couldn’t accept invite.', 'error'); return; }
+  selectedListId = data;
+  activeCat = 'lists';
+  await refreshCloudLists();
+  showToast('Invite accepted.', 'success');
+}
+
+async function declinePendingShare(shareId) {
+  const { error } = await db.rpc('decline_list_share', { p_share_id: shareId });
+  if (error) { showToast(error.message || 'Couldn’t decline invite.', 'error'); return; }
+  await refreshCloudLists();
+}
+
+function openAddToList(itemId) {
+  if (!isCloud()) return;
+  pendingListItemId = itemId;
+  const item = cloudItems.find(i => i.id === itemId);
+  document.getElementById('addToListItemTitle').textContent = item?.title || '';
+  const lists = editableLists();
+  const el = document.getElementById('addToListOptions');
+  if (!lists.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🔗</div><h3>No editable lists</h3><p>Create a list first.</p></div>`;
+  } else {
+    el.innerHTML = lists.map(list => {
+      const exists = cloudListItems.some(li => li.list_id === list.id && li.item_id === itemId);
+      return `<div class="list-row">
+        <div class="list-row-main">
+          <div class="list-title">${esc(listTitle(list))}</div>
+          <div class="list-meta">${exists ? 'Already in this list' : esc(listRoleLabel(list))}</div>
+        </div>
+        <button class="list-mini-btn" ${exists ? 'disabled' : ''} onclick="addItemToList('${list.id}')">${exists ? 'Added' : 'Add'}</button>
+      </div>`;
+    }).join('');
+  }
+  openSheet('addToListSheet');
+}
+
+async function addItemToList(listId) {
+  if (!pendingListItemId) return;
+  const { error } = await db.from('list_items').insert({ list_id: listId, item_id: pendingListItemId });
+  if (error) { showToast('Couldn’t add item to list.', 'error'); return; }
+  closeSheet('addToListSheet');
+  pendingListItemId = null;
+  await refreshCloudLists();
+  showToast('Added to list.', 'success');
+}
+
+async function removeItemFromList(listId, itemId) {
+  const { error } = await db.from('list_items')
+    .delete()
+    .eq('list_id', listId)
+    .eq('item_id', itemId);
+  if (error) { showToast('Couldn’t remove item.', 'error'); return; }
+  await refreshCloudLists();
+}
+
+function getHashListSlug() {
+  const match = window.location.hash.match(/^#list\/([^/?#]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function clearListHash() {
+  if (!getHashListSlug()) return;
+  history.replaceState(null, '', window.location.pathname + window.location.search);
+}
+
+async function handleHashRoute() {
+  const slug = getHashListSlug();
+  if (!slug) {
+    publicListView = null;
+    renderTabs(); renderMain();
+    return;
+  }
+  document.querySelectorAll('.sheet.open').forEach(el => closeSheet(el.id));
+
+  if (currentUser && cloudReady) {
+    const { data, error } = await db.rpc('accept_list_invite', { p_share_slug: slug });
+    if (!error && data) {
+      await fetchCloudLists();
+      publicListView = null;
+      selectedListId = data;
+      activeCat = 'lists';
+      renderTabs(); renderMain();
+      return;
+    }
+  }
+
+  await loadPublicList(slug);
+}
+
+async function loadPublicList(slug) {
+  showLoading();
+  const { data: list, error } = await db.from('lists')
+    .select('*')
+    .eq('share_slug', slug)
+    .maybeSingle();
+
+  if (error || !list) {
+    publicListView = { inviteOnly: true, slug };
+    renderTabs(); renderMain();
+    return;
+  }
+
+  const { data: rows, error: rowsError } = await db.from('list_items')
+    .select('*')
+    .eq('list_id', list.id);
+  if (rowsError) {
+    publicListView = { inviteOnly: true, slug };
+    renderTabs(); renderMain();
+    return;
+  }
+
+  const itemIds = [...new Set((rows || []).map(r => r.item_id).filter(Boolean))];
+  let items = [];
+  if (itemIds.length) {
+    const { data, error: itemsError } = await db.from('items')
+      .select('*')
+      .in('id', itemIds);
+    if (!itemsError) items = data || [];
+  }
+
+  publicListView = {
+    list,
+    items: items.filter(i => i.status !== 'deleted' && i.status !== 'archived')
+  };
+  renderTabs(); renderMain();
+}
+
+function exitPublicList() {
+  publicListView = null;
+  clearListHash();
+  renderTabs(); renderMain();
 }
 
 // ── Auth UI helpers ──────────────────────────────────────
@@ -1031,6 +1465,7 @@ const CATS = [
   { id:'company',      label:'Company',      emoji:'🏠' },
   { id:'share',        label:'Share',        emoji:'📤' },
   { id:'ideas',        label:'Ideas',        emoji:'💡' },
+  { id:'lists',        label:'Lists',        emoji:'🔗', isLists: true },
   { id:'archive',      label:'Archive',      emoji:'📦', isArchive: true },
 ];
 
@@ -1059,11 +1494,8 @@ function save() {
 
 
 // ══════════════════════════════════════════════════════════
-// CLOUD STATE — used when signed in (Phase 3)
+// CLOUD STATE — used when signed in (Phase 3/4)
 // ══════════════════════════════════════════════════════════
-let cloudItems = [];     // rows fetched from Supabase
-let cloudReady = false;  // true once the initial fetch has loaded cloudItems
-
 // Single switch the whole UI reads. False until cloud data is loaded,
 // so an already-signed-in user still renders guest data until Task 2 wires sync.
 function isCloud() { return !!currentUser && cloudReady; }
@@ -1086,6 +1518,72 @@ function getDeletedItems() {
   if (!isCloud()) return [];
   return cloudItems.filter(i => i.status === 'deleted')
     .sort((a, b) => new Date(b.deleted_at || 0) - new Date(a.deleted_at || 0));
+}
+
+// ── List accessors (cloud only) ──────────────────────────
+function listTitle(list) {
+  return list?.title || list?.name || 'Untitled list';
+}
+
+function listShare(listId) {
+  if (!currentUser) return null;
+  return cloudShares.find(s => s.list_id === listId && s.shared_with === currentUser.id && s.accepted);
+}
+
+function isListOwner(list) {
+  return !!currentUser && list?.owner_id === currentUser.id;
+}
+
+function canEditList(list) {
+  if (isListOwner(list)) return true;
+  const share = listShare(list?.id);
+  return share?.permission === 'editor';
+}
+
+function listRoleLabel(list) {
+  if (isListOwner(list)) return 'Owner';
+  const share = listShare(list.id);
+  if (share?.permission === 'editor') return 'Editor';
+  if (share) return 'Viewer';
+  return list.is_public ? 'Public' : 'Private';
+}
+
+function pendingShares() {
+  if (!currentUser) return [];
+  return cloudShares.filter(s => s.shared_with === currentUser.id && !s.accepted);
+}
+
+function editableLists() {
+  return cloudLists.filter(canEditList);
+}
+
+function getCloudItemById(id) {
+  return cloudItems.find(i => i.id === id) || cloudListContentItems.find(i => i.id === id);
+}
+
+function getItemsForList(listId, source = null) {
+  const contentItems = source || cloudListContentItems;
+  const byId = new Map(contentItems.concat(cloudItems).map(i => [i.id, i]));
+  return cloudListItems
+    .filter(li => li.list_id === listId)
+    .map(li => byId.get(li.item_id))
+    .filter(i => i && i.status !== 'deleted' && i.status !== 'archived');
+}
+
+function publicListUrl(list) {
+  return `${window.location.origin}${window.location.pathname}#list/${encodeURIComponent(list.share_slug)}`;
+}
+
+function generateShareSlug() {
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  return [...bytes].map(b => b.toString(36).padStart(2, '0')).join('').slice(0, 12);
+}
+
+function listBadgeHTML(list) {
+  const role = listRoleLabel(list);
+  const cls = list.is_public ? ' public' : (role === 'Editor' ? ' editor' : '');
+  return `<span class="list-badge${cls}">${esc(role)}</span>`;
 }
 
 
@@ -1114,9 +1612,12 @@ function viewItems() {
 function renderTabs() {
   const wrap   = document.getElementById('tabs');
   const active = getActiveItems();
-  wrap.innerHTML = CATS.map(c => {
+  const cats = CATS.filter(c => !c.isLists || isCloud());
+  wrap.innerHTML = cats.map(c => {
     let count;
-    if (c.isArchive) {
+    if (c.isLists) {
+      count = cloudLists.length;
+    } else if (c.isArchive) {
       count = getArchivedItems().length;
     } else {
       const pool = c.id === 'all' ? active : active.filter(i => i.cat === c.id);
@@ -1132,6 +1633,9 @@ function renderTabs() {
 function setTab(id) {
   activeCat = id;
   showDone  = false;
+  if (id !== 'lists') selectedListId = null;
+  publicListView = null;
+  if (id !== 'lists') clearListHash();
   renderTabs();
   renderMain();
 }
@@ -1142,6 +1646,9 @@ function setTab(id) {
 // ══════════════════════════════════════════════════════════
 function renderMain() {
   const main      = document.getElementById('main');
+  if (publicListView) { renderPublicList(main); return; }
+  if (activeCat === 'lists') { renderLists(main); return; }
+
   const allActive = getActiveItems();
   const total     = allActive.length;
   document.getElementById('headerCount').textContent =
@@ -1171,6 +1678,122 @@ function renderArchive(main) {
   main.innerHTML = html;
 }
 
+function renderLists(main) {
+  document.getElementById('headerCount').textContent =
+    `${cloudLists.length} list${cloudLists.length !== 1 ? 's' : ''}`;
+
+  if (!isCloud()) {
+    main.innerHTML = `<div class="empty"><div class="empty-icon">🔗</div><h3>Sign in to use lists</h3><p>Lists sync through your Instead account.</p></div>`;
+    return;
+  }
+
+  const selected = cloudLists.find(l => l.id === selectedListId);
+  if (selected) { renderSelectedList(main, selected); return; }
+
+  const invites = pendingShares();
+  let html = `<div class="list-toolbar">
+    <div class="list-heading">Lists</div>
+    <button class="btn-done" onclick="openListSheet()">+ New list</button>
+  </div>`;
+
+  if (invites.length) {
+    html += `<div class="section-divider">${invites.length} pending invite${invites.length !== 1 ? 's' : ''}</div><div class="list-stack">`;
+    invites.forEach(share => {
+      const list = cloudLists.find(l => l.id === share.list_id);
+      html += `<div class="list-row pending-share">
+        <div class="list-row-main">
+          <div class="list-title">${esc(listTitle(list))}</div>
+          <div class="list-meta">${esc(share.permission || 'viewer')} invite</div>
+        </div>
+        <button class="list-mini-btn" onclick="acceptPendingShare('${share.id}')">Accept</button>
+        <button class="list-mini-btn danger" onclick="declinePendingShare('${share.id}')">Decline</button>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (cloudLists.length === 0) {
+    html += `<div class="empty"><div class="empty-icon">🔗</div><h3>No lists yet</h3><p>Create a list to group items and share them.</p></div>`;
+    main.innerHTML = html;
+    return;
+  }
+
+  html += `<div class="list-stack">`;
+  cloudLists.forEach(list => {
+    const count = getItemsForList(list.id).length;
+    html += `<div class="list-row">
+      <div class="list-row-main" onclick="openListView('${list.id}')">
+        <div class="list-title">${esc(listTitle(list))}</div>
+        <div class="list-meta">${count} item${count !== 1 ? 's' : ''}</div>
+      </div>
+      ${listBadgeHTML(list)}
+      ${isListOwner(list) ? `<button class="list-mini-btn" onclick="openListSheet('${list.id}')">Manage</button>` : ''}
+    </div>`;
+  });
+  html += `</div>`;
+  main.innerHTML = html;
+}
+
+function renderSelectedList(main, list) {
+  const items = getItemsForList(list.id);
+  const editable = canEditList(list);
+  const shareBtn = list.share_slug
+    ? `<button class="list-mini-btn" onclick="copyListLink('${list.id}')">Copy link</button>` : '';
+  let html = `<div class="list-toolbar">
+    <button class="list-mini-btn" onclick="closeListView()">← Lists</button>
+    <div class="list-actions">
+      ${shareBtn}
+      ${isListOwner(list) ? `<button class="list-mini-btn" onclick="openListSheet('${list.id}')">Manage</button>` : ''}
+    </div>
+  </div>
+  <div class="list-toolbar">
+    <div>
+      <div class="list-heading">${esc(listTitle(list))}</div>
+      <div class="list-meta">${esc(listRoleLabel(list))}${list.is_public ? ' · public' : ''}</div>
+    </div>
+    ${listBadgeHTML(list)}
+  </div>`;
+
+  if (items.length === 0) {
+    html += `<div class="empty"><div class="empty-icon">🔗</div><h3>No items yet</h3><p>${editable ? 'Use Add to list from an item card.' : 'The owner has not added anything yet.'}</p></div>`;
+  } else {
+    items.forEach(item => { html += listItemCardHTML(item, list, editable); });
+  }
+  main.innerHTML = html;
+}
+
+function renderPublicList(main) {
+  if (publicListView.inviteOnly) {
+    document.getElementById('headerCount').textContent = 'Shared list invite';
+    main.innerHTML = `<div class="empty">
+      <div class="empty-icon">🔗</div>
+      <h3>Sign in to accept this list</h3>
+      <p>This invite is private. Sign in or create an account, then the list will be added to your account.</p>
+      <div class="card-actions" style="justify-content:center;margin-top:18px;">
+        <button class="btn-open" onclick="openAuthPanel()">Sign in</button>
+      </div>
+    </div>`;
+    return;
+  }
+  const list = publicListView.list;
+  const items = publicListView.items || [];
+  document.getElementById('headerCount').textContent =
+    `${items.length} shared item${items.length !== 1 ? 's' : ''}`;
+  let html = `<div class="list-toolbar">
+    <div>
+      <div class="list-heading">${esc(listTitle(list))}</div>
+      <div class="list-meta">Public read-only list</div>
+    </div>
+    <button class="list-mini-btn" onclick="exitPublicList()">Close</button>
+  </div>`;
+  if (items.length === 0) {
+    html += `<div class="empty"><div class="empty-icon">🔗</div><h3>No public items</h3><p>This list is empty.</p></div>`;
+  } else {
+    items.forEach(item => { html += readonlyCardHTML(item); });
+  }
+  main.innerHTML = html;
+}
+
 
 // ══════════════════════════════════════════════════════════
 // CARD HTML
@@ -1183,6 +1806,8 @@ function cardHTML(item) {
   const notes   = item.notes || '';
   const openBtn = item.url
     ? `<a class="btn-open" href="${esc(item.url)}" target="_blank" rel="noopener">Open →</a>` : '';
+  const listBtn = isCloud() && editableLists().length
+    ? `<button class="btn-edit" onclick="openAddToList('${item.id}')">🔗 Add to list</button>` : '';
   const notesHtml = notes
     ? `<div class="card-notes">${esc(notes)}</div>` : '';
   return `<div class="card" id="card-${item.id}">
@@ -1194,11 +1819,49 @@ function cardHTML(item) {
       <div class="card-actions">
         ${openBtn}
         <button class="btn-done" onclick="promptDone('${item.id}')">✓ Done</button>
+        ${listBtn}
         <button class="btn-edit" onclick="openEdit('${item.id}')">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Edit
         </button>
       </div>
+    </div>
+  </div>`;
+}
+
+function readonlyCardHTML(item) {
+  const notes   = item.notes || '';
+  const openBtn = item.url
+    ? `<a class="btn-open" href="${esc(item.url)}" target="_blank" rel="noopener">Open →</a>` : '';
+  const notesHtml = notes
+    ? `<div class="card-notes">${esc(notes)}</div>` : '';
+  return `<div class="card">
+    <div class="card-emoji">${item.emoji || '📌'}</div>
+    <div class="card-body">
+      <div class="card-title">${esc(item.title)}</div>
+      ${item.sub ? `<div class="card-sub">${esc(item.sub)}</div>` : ''}
+      ${notesHtml}
+      ${openBtn ? `<div class="card-actions">${openBtn}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function listItemCardHTML(item, list, editable) {
+  const removeBtn = editable
+    ? `<button class="btn-perm-delete list-item-remove" onclick="removeItemFromList('${list.id}','${item.id}')">Remove</button>` : '';
+  if (!removeBtn) return readonlyCardHTML(item);
+  const notes   = item.notes || '';
+  const openBtn = item.url
+    ? `<a class="btn-open" href="${esc(item.url)}" target="_blank" rel="noopener">Open →</a>` : '';
+  const notesHtml = notes
+    ? `<div class="card-notes">${esc(notes)}</div>` : '';
+  return `<div class="card">
+    <div class="card-emoji">${item.emoji || '📌'}</div>
+    <div class="card-body">
+      <div class="card-title">${esc(item.title)}</div>
+      ${item.sub ? `<div class="card-sub">${esc(item.sub)}</div>` : ''}
+      ${notesHtml}
+      <div class="card-actions">${openBtn}${removeBtn}</div>
     </div>
   </div>`;
 }
@@ -1464,8 +2127,11 @@ document.addEventListener('keydown', e => {
     if (document.getElementById('addSheet').classList.contains('open')  && document.activeElement.tagName !== 'TEXTAREA') submitAdd();
     if (document.getElementById('editSheet').classList.contains('open') && document.activeElement.tagName !== 'TEXTAREA') submitEdit();
     if (document.getElementById('authSheet').classList.contains('open') && document.activeElement.tagName !== 'TEXTAREA') submitAuth();
+    if (document.getElementById('listSheet').classList.contains('open') && document.activeElement.tagName !== 'TEXTAREA') saveListFromSheet();
   }
 });
+
+window.addEventListener('hashchange', () => { handleHashRoute(); });
 
 
 // ══════════════════════════════════════════════════════════
@@ -1502,8 +2168,7 @@ if ('serviceWorker' in navigator) {
 
 
 // ── INIT ────────────────────────────────────────────────
-renderTabs();
-renderMain();
+handleHashRoute();
 </script>
 </body>
 </html>
