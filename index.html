@@ -203,6 +203,24 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 .btn-form-cancel:hover { background: #DDD8CC; }
 .notes-hint { font-size: 11px; color: var(--amber); margin-top: 4px; }
 
+/* ── TOAST ── */
+.toast {
+  position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 12px;
+  font-family: var(--font-body); font-size: 14px; font-weight: 600;
+  box-shadow: var(--shadow-hover); z-index: 300; opacity: 0; pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s; max-width: calc(100% - 32px); text-align: center;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.error { background: var(--terra); }
+.toast.success { background: var(--forest); }
+
+/* ── SKELETON (loading) ── */
+.skeleton-card { background: var(--card); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 12px; box-shadow: var(--shadow); display: flex; gap: 14px; }
+.skeleton-line { height: 12px; border-radius: 6px; background: linear-gradient(90deg, var(--cream-dark) 25%, #E4DDCD 50%, var(--cream-dark) 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
 @media (min-width: 480px) { .main { padding: 20px 20px 100px; } .app-title { font-size: 32px; } }
 </style>
 </head>
@@ -239,6 +257,9 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 
 <!-- FAB -->
 <button class="fab" onclick="openSurprise()"><span>✨</span> Surprise me</button>
+
+<!-- TOAST (non-blocking notifications) -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 
 <!-- ── SURPRISE SHEET ── -->
@@ -635,6 +656,37 @@ function save() {
 }
 
 
+// ══════════════════════════════════════════════════════════
+// CLOUD STATE — used when signed in (Phase 3)
+// ══════════════════════════════════════════════════════════
+let cloudItems = [];     // rows fetched from Supabase
+let cloudReady = false;  // true once the initial fetch has loaded cloudItems
+
+// Single switch the whole UI reads. False until cloud data is loaded,
+// so an already-signed-in user still renders guest data until Task 2 wires sync.
+function isCloud() { return !!currentUser && cloudReady; }
+
+// ── Data accessors (mode-agnostic) ───────────────────────
+// Both modes return item objects carrying a `notes` field so all
+// render code can read `item.notes` regardless of where data lives.
+function getActiveItems() {
+  if (isCloud()) return cloudItems.filter(i => i.status === 'active');
+  return allActiveItems();
+}
+function getArchivedItems() {
+  if (isCloud()) {
+    return cloudItems.filter(i => i.status === 'archived')
+      .sort((a, b) => new Date(b.archived_at || 0) - new Date(a.archived_at || 0));
+  }
+  return [...archivedItems].reverse(); // newest first
+}
+function getDeletedItems() {
+  if (!isCloud()) return [];
+  return cloudItems.filter(i => i.status === 'deleted')
+    .sort((a, b) => new Date(b.deleted_at || 0) - new Date(a.deleted_at || 0));
+}
+
+
 // ── Item resolution ──────────────────────────────────────
 function resolveItem(base) {
   const ov = overrides[base.id] || {};
@@ -648,7 +700,7 @@ function allActiveItems() {
 }
 
 function viewItems() {
-  const all = allActiveItems();
+  const all = getActiveItems();
   if (activeCat === 'all' || activeCat === 'archive') return all;
   return all.filter(i => i.cat === activeCat);
 }
@@ -659,11 +711,11 @@ function viewItems() {
 // ══════════════════════════════════════════════════════════
 function renderTabs() {
   const wrap   = document.getElementById('tabs');
-  const active = allActiveItems();
+  const active = getActiveItems();
   wrap.innerHTML = CATS.map(c => {
     let count;
     if (c.isArchive) {
-      count = archivedItems.length;
+      count = getArchivedItems().length;
     } else {
       const pool = c.id === 'all' ? active : active.filter(i => i.cat === c.id);
       count = pool.length;
@@ -688,7 +740,7 @@ function setTab(id) {
 // ══════════════════════════════════════════════════════════
 function renderMain() {
   const main      = document.getElementById('main');
-  const allActive = allActiveItems();
+  const allActive = getActiveItems();
   const total     = allActive.length;
   document.getElementById('headerCount').textContent =
     `${total} thing${total !== 1 ? 's' : ''} to explore`;
@@ -707,12 +759,13 @@ function renderMain() {
 }
 
 function renderArchive(main) {
-  if (archivedItems.length === 0) {
+  const arch = getArchivedItems(); // newest first
+  if (arch.length === 0) {
     main.innerHTML = `<div class="empty"><div class="empty-icon">📦</div><h3>Archive is empty</h3><p>When you mark something as done and choose "Archive", it'll live here for reference.</p></div>`;
     return;
   }
-  let html = `<div class="section-divider">${archivedItems.length} archived</div>`;
-  [...archivedItems].reverse().forEach(item => { html += archivedCardHTML(item); });
+  let html = `<div class="section-divider">${arch.length} archived</div>`;
+  arch.forEach(item => { html += archivedCardHTML(item); });
   main.innerHTML = html;
 }
 
@@ -725,7 +778,7 @@ function esc(str) {
 }
 
 function cardHTML(item) {
-  const notes   = overrides[item.id]?.notes || '';
+  const notes   = item.notes || '';
   const openBtn = item.url
     ? `<a class="btn-open" href="${esc(item.url)}" target="_blank" rel="noopener">Open →</a>` : '';
   const notesHtml = notes
@@ -749,7 +802,7 @@ function cardHTML(item) {
 }
 
 function archivedCardHTML(item) {
-  const notes   = item.notes || overrides[item.id]?.notes || '';
+  const notes   = item.notes || '';
   const openBtn = item.url
     ? `<a class="btn-open" href="${esc(item.url)}" target="_blank" rel="noopener">Open →</a>` : '';
   const notesHtml = notes
@@ -777,7 +830,7 @@ function archivedCardHTML(item) {
 // DONE PROMPT
 // ══════════════════════════════════════════════════════════
 function promptDone(id) {
-  const item = allActiveItems().find(i => i.id === id);
+  const item = getActiveItems().find(i => i.id === id);
   if (!item) return;
   pendingDoneId = id;
   document.getElementById('doneEmoji').textContent = item.emoji || '📌';
@@ -839,13 +892,13 @@ function deleteFromArchive(id) {
 let editingId = null;
 
 function openEdit(id) {
-  const item = allActiveItems().find(i => i.id === id);
+  const item = getActiveItems().find(i => i.id === id);
   if (!item) return;
   editingId = id;
   document.getElementById('editHeading').textContent = 'Edit: ' + item.title.slice(0, 30);
   document.getElementById('editTitle').value  = item.title;
   document.getElementById('editSub').value    = item.sub || '';
-  document.getElementById('editNotes').value  = overrides[id]?.notes || '';
+  document.getElementById('editNotes').value  = item.notes || '';
   document.getElementById('editUrl').value    = item.url || '';
   document.getElementById('editCat').value    = item.cat;
   openSheet('editSheet');
@@ -914,9 +967,9 @@ let lastSurpriseId = null;
 
 function openSurprise() {
   closeSheet('surpriseSheet');
-  const pool = allActiveItems().filter(i => i.url && i.id !== lastSurpriseId);
+  const pool = getActiveItems().filter(i => i.url && i.id !== lastSurpriseId);
   if (pool.length === 0) {
-    const any = allActiveItems().filter(i => i.id !== lastSurpriseId);
+    const any = getActiveItems().filter(i => i.id !== lastSurpriseId);
     if (any.length === 0) { alert("You've explored everything! Check your archive or add something new."); return; }
     lastSurpriseId = null; openSurprise(); return;
   }
@@ -929,6 +982,29 @@ function openSurprise() {
   link.href = item.url;
   link.style.display = 'block';
   openSheet('surpriseSheet');
+}
+
+
+// ══════════════════════════════════════════════════════════
+// TOAST + LOADING HELPERS
+// ══════════════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    el.className = 'toast' + (type ? ' ' + type : '');
+  }, 3200);
+}
+
+function showLoading() {
+  const row = `<div class="skeleton-card"><div style="flex:1">
+    <div class="skeleton-line" style="width:55%;margin-bottom:9px"></div>
+    <div class="skeleton-line" style="width:88%"></div></div></div>`;
+  document.getElementById('main').innerHTML = row.repeat(5);
 }
 
 
