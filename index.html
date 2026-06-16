@@ -429,7 +429,164 @@ db.auth.onAuthStateChange((event, session) => {
   updateAuthUI();
   if (event === 'SIGNED_IN')  closeSheet('authSheet');
   if (event === 'SIGNED_OUT') closeSheet('userSheet');
+
+  if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+    if (currentUser) {
+      syncOnLogin();           // seed / migrate / fetch from Supabase
+    } else {
+      renderTabs(); renderMain(); // INITIAL_SESSION with no session → guest
+    }
+  } else if (event === 'SIGNED_OUT') {
+    cloudReady = false;        // revert to localStorage / guest mode
+    cloudItems = [];
+    renderTabs(); renderMain();
+  }
 });
+
+
+// ══════════════════════════════════════════════════════════
+// CLOUD SYNC — seed, migrate, fetch, purge (Phase 3)
+// ══════════════════════════════════════════════════════════
+const SEED_FLAG_PREFIX = 'instead_seeded_'; // per-user guard against re-seeding an emptied account
+const PURGE_DAYS = 30;
+
+// Called on first sign-in and on every page load with a session.
+async function syncOnLogin() {
+  const uid = currentUser.id;
+  showLoading();
+  try {
+    await purgeOldDeleted(uid);              // hard-delete soft-deleted rows > 30 days old
+    let rows = await fetchItems();
+
+    if (rows.length === 0) {
+      const seededBefore = localStorage.getItem(SEED_FLAG_PREFIX + uid);
+      if (hasLocalData()) {
+        await migrateLocalToCloud(uid);      // carry guest data up, then clear it
+        clearLocalData();
+        rows = await fetchItems();
+      } else if (!seededBefore) {
+        await seedBuiltins(uid);             // fresh account → seed the 51 built-ins
+        rows = await fetchItems();
+      }
+      localStorage.setItem(SEED_FLAG_PREFIX + uid, '1');
+    }
+
+    cloudItems = rows;
+    cloudReady = true;
+    renderTabs(); renderMain();
+  } catch (err) {
+    console.error('Cloud sync failed:', err);
+    showToast('Couldn’t load your items — showing local data.', 'error');
+    cloudReady = false;                      // fall back to guest/local view
+    renderTabs(); renderMain();
+  }
+}
+
+async function fetchItems() {
+  const { data, error } = await db.from('items')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function seedBuiltins(uid) {
+  const rows = BUILT_IN.map((b, i) => ({
+    user_id: uid, cat: b.cat, emoji: b.emoji, title: b.title,
+    sub: b.sub || null, url: b.url || null, notes: null,
+    source: 'builtin', status: 'active', sort_order: i,
+  }));
+  const { error } = await db.from('items').insert(rows);
+  if (error) throw error;
+}
+
+// 30-day retention sweep for soft-deleted items.
+async function purgeOldDeleted(uid) {
+  const cutoff = new Date(Date.now() - PURGE_DAYS * 86400000).toISOString();
+  const { error } = await db.from('items')
+    .delete()
+    .eq('user_id', uid)
+    .eq('status', 'deleted')
+    .lt('deleted_at', cutoff);
+  if (error) console.warn('Purge failed:', error.message);
+}
+
+// ── Guest → cloud migration ──────────────────────────────
+function hasLocalData() {
+  return customItems.length > 0
+    || Object.keys(overrides).length > 0
+    || archivedItems.length > 0
+    || deletedIds.size > 0;
+}
+
+function clearLocalData() {
+  ['instead_custom', 'instead_overrides', 'instead_archive', 'instead_deleted']
+    .forEach(k => localStorage.removeItem(k));
+  customItems = [];
+  overrides = {};
+  archivedItems = [];
+  deletedIds = new Set();
+}
+
+function rowFrom(item, uid, extra) {
+  return {
+    user_id: uid,
+    cat: item.cat,
+    emoji: item.emoji || null,
+    title: item.title,
+    sub: item.sub || null,
+    url: item.url || null,
+    notes: item.notes || null,
+    ...extra,
+  };
+}
+
+function buildMigrationRows(uid) {
+  const rows = [];
+  const archivedIds = new Set(archivedItems.map(a => a.id));
+
+  // Built-ins: active (with edits), or soft-deleted. Archived ones handled below.
+  BUILT_IN.forEach((b, i) => {
+    if (archivedIds.has(b.id)) return;
+    const merged = { ...b, ...(overrides[b.id] || {}) };
+    if (deletedIds.has(b.id)) {
+      rows.push(rowFrom(merged, uid, {
+        source: 'builtin', status: 'deleted',
+        deleted_at: new Date().toISOString(), sort_order: i,
+      }));
+    } else {
+      rows.push(rowFrom(merged, uid, { source: 'builtin', status: 'active', sort_order: i }));
+    }
+  });
+
+  // Active custom items (archived/deleted customs are removed from customItems already).
+  customItems.forEach((c, idx) => {
+    if (archivedIds.has(c.id)) return;
+    const merged = { ...c, ...(overrides[c.id] || {}) };
+    rows.push(rowFrom(merged, uid, { source: 'custom', status: 'active', sort_order: BUILT_IN.length + idx }));
+  });
+
+  // Archived items (built-in or custom) — notes already baked in.
+  archivedItems.forEach((a, idx) => {
+    rows.push(rowFrom(a, uid, {
+      source: a.id.startsWith('c') ? 'custom' : 'builtin',
+      status: 'archived',
+      archived_at: a.archivedAt || new Date().toISOString(),
+      sort_order: BUILT_IN.length + 1000 + idx,
+    }));
+  });
+
+  return rows;
+}
+
+async function migrateLocalToCloud(uid) {
+  const rows = buildMigrationRows(uid);
+  if (rows.length === 0) return;
+  const { error } = await db.from('items').insert(rows);
+  if (error) throw error;
+}
 
 // ── Auth UI helpers ──────────────────────────────────────
 function updateAuthUI() {
