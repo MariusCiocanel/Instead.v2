@@ -469,9 +469,12 @@ db.auth.onAuthStateChange((event, session) => {
 // ══════════════════════════════════════════════════════════
 const SEED_FLAG_PREFIX = 'instead_seeded_'; // per-user guard against re-seeding an emptied account
 const PURGE_DAYS = 30;
+let syncInFlight = false;                   // guard: auth events can fire twice on load
 
 // Called on first sign-in and on every page load with a session.
 async function syncOnLogin() {
+  if (syncInFlight) return;                 // a concurrent run would double-seed at zero rows
+  syncInFlight = true;
   const uid = currentUser.id;
   showLoading();
   try {
@@ -499,6 +502,8 @@ async function syncOnLogin() {
     showToast('Couldn’t load your items — showing local data.', 'error');
     cloudReady = false;                      // fall back to guest/local view
     renderTabs(); renderMain();
+  } finally {
+    syncInFlight = false;
   }
 }
 
