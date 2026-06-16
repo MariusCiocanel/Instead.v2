@@ -588,6 +588,54 @@ async function migrateLocalToCloud(uid) {
   if (error) throw error;
 }
 
+
+// ══════════════════════════════════════════════════════════
+// CLOUD WRITES — optimistic, with error toast (Phase 3)
+// On failure we surface a toast; the next sign-in fetch reconciles
+// state. (Add is the exception: a failed insert removes the orphan
+// optimistic row, since there is nothing persisted to keep.)
+// ══════════════════════════════════════════════════════════
+function nextSortOrder() {
+  return Math.max(0, ...cloudItems.map(i => i.sort_order || 0)) + 1;
+}
+
+async function cloudAdd(fields) {
+  const tempId = 'tmp_' + Date.now();
+  const sort_order = nextSortOrder();
+  cloudItems.push({
+    id: tempId, user_id: currentUser.id, status: 'active', source: 'custom',
+    sort_order, archived_at: null, deleted_at: null, ...fields,
+  });
+  renderTabs(); renderMain();
+
+  const { data, error } = await db.from('items')
+    .insert({ user_id: currentUser.id, status: 'active', source: 'custom', sort_order, ...fields })
+    .select()
+    .single();
+
+  if (error) {
+    cloudItems = cloudItems.filter(i => i.id !== tempId);
+    renderTabs(); renderMain();
+    showToast('Couldn’t save your item — try again.', 'error');
+    return;
+  }
+  const idx = cloudItems.findIndex(i => i.id === tempId);
+  if (idx !== -1) cloudItems[idx] = data;   // swap temp row for the real persisted one
+  renderTabs(); renderMain();
+}
+
+async function cloudEdit(id, patch) {
+  const idx = cloudItems.findIndex(i => i.id === id);
+  if (idx === -1) return;
+  cloudItems[idx] = { ...cloudItems[idx], ...patch };  // optimistic
+  renderTabs(); renderMain();
+
+  const { error } = await db.from('items')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) showToast('Couldn’t save your changes — try again.', 'error');
+}
+
 // ── Auth UI helpers ──────────────────────────────────────
 function updateAuthUI() {
   const btn = document.getElementById('authBtn');
@@ -1068,20 +1116,23 @@ function submitEdit() {
   if (!title) { document.getElementById('editTitle').focus(); return; }
   let url = document.getElementById('editUrl').value.trim();
   if (url && !url.startsWith('http')) url = 'https://' + url;
-  overrides[editingId] = {
-    ...(overrides[editingId] || {}),
-    title,
-    sub:   document.getElementById('editSub').value.trim()   || null,
-    notes: document.getElementById('editNotes').value.trim() || null,
-    url:   url || null,
-    cat:   document.getElementById('editCat').value,
-  };
-  if (editingId.startsWith('c')) {
-    const idx = customItems.findIndex(i => i.id === editingId);
-    if (idx !== -1) customItems[idx].cat = document.getElementById('editCat').value;
-  }
+  const cat   = document.getElementById('editCat').value;
+  const sub   = document.getElementById('editSub').value.trim()   || null;
+  const notes = document.getElementById('editNotes').value.trim() || null;
+  const id    = editingId;
   editingId = null;
-  save(); closeSheet('editSheet'); renderTabs(); renderMain();
+  closeSheet('editSheet');
+
+  if (isCloud()) {
+    cloudEdit(id, { title, sub, url: url || null, notes, cat });
+  } else {
+    overrides[id] = { ...(overrides[id] || {}), title, sub, notes, url: url || null, cat };
+    if (id.startsWith('c')) {
+      const idx = customItems.findIndex(i => i.id === id);
+      if (idx !== -1) customItems[idx].cat = cat;
+    }
+    save(); renderTabs(); renderMain();
+  }
 }
 
 
@@ -1106,13 +1157,19 @@ function submitAdd() {
   const cat   = document.getElementById('addCat').value;
   const notes = document.getElementById('addNotes').value.trim();
   const sub   = document.getElementById('addSub').value.trim();
-  const id    = 'c' + Date.now();
-  customItems.push({ id, cat, emoji: EMOJI_MAP[cat] || '📌', title, sub: sub || null, url: url || null });
-  if (notes) overrides[id] = { notes };
-  save();
+  const emoji = EMOJI_MAP[cat] || '📌';
   closeSheet('addSheet');
   activeCat = cat;
-  renderTabs(); renderMain();
+
+  if (isCloud()) {
+    cloudAdd({ cat, emoji, title, sub: sub || null, url: url || null, notes: notes || null });
+  } else {
+    const id = 'c' + Date.now();
+    customItems.push({ id, cat, emoji, title, sub: sub || null, url: url || null });
+    if (notes) overrides[id] = { notes };
+    save();
+    renderTabs(); renderMain();
+  }
   document.getElementById('main').scrollTop = 0;
 }
 
