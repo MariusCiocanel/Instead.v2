@@ -417,6 +417,9 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
       Your items are saved to Instead and sync across your devices.
     </div>
 
+    <button class="btn-sheet-secondary" id="importLocalBtn" style="display:none; width:100%; margin-bottom:14px;"
+      onclick="importLocalData()">⬆️ Import data from this device</button>
+
     <div id="recentlyDeletedSection"></div>
 
     <div class="sheet-actions">
@@ -710,6 +713,7 @@ function openUserMenu() {
   const name = currentUser.user_metadata?.display_name || currentUser.email || '?';
   document.getElementById('userAvatarLg').textContent = name[0].toUpperCase();
   document.getElementById('userEmailText').textContent = currentUser.email;
+  updateImportButton();
   renderRecentlyDeleted();
   openSheet('userSheet');
 }
@@ -758,6 +762,117 @@ async function hardDeleteItem(id) {
   renderRecentlyDeleted(); renderTabs(); renderMain();
   const { error } = await db.from('items').delete().eq('id', id);
   if (error) showToast('Couldn’t delete permanently — try again.', 'error');
+}
+
+
+// ── Import on-device (localStorage) data into the cloud ──
+// Manual, de-duplicating merge. Built-ins are matched to existing cloud
+// rows by title and patched in place (edit / archive / delete) so they
+// are never duplicated; custom items are inserted unless a same-titled
+// custom row already exists. Local data is cleared after a clean import.
+const norm = s => String(s || '').trim().toLowerCase();
+
+function updateImportButton() {
+  const btn = document.getElementById('importLocalBtn');
+  if (!btn) return;
+  btn.style.display = (isCloud() && hasLocalData()) ? 'block' : 'none';
+  btn.disabled = false;
+  btn.textContent = '⬆️ Import data from this device';
+}
+
+async function importLocalData() {
+  if (!isCloud()) return;
+  if (!hasLocalData()) { showToast('No on-device data to import.'); return; }
+
+  const btn = document.getElementById('importLocalBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Importing…'; }
+
+  try {
+    const uid = currentUser.id;
+    const inserts = [];
+    const updates = [];                       // { id, patch }
+    const archivedIds = new Set(archivedItems.map(a => a.id));
+
+    // Index existing cloud rows by title for built-in matching.
+    const byTitle = new Map();
+    cloudItems.forEach(r => byTitle.set(norm(r.title), r));
+    const customTitles = new Set(
+      cloudItems.filter(r => r.source === 'custom').map(r => norm(r.title))
+    );
+
+    // Built-ins: push local changes (edit / archive / delete) onto the cloud row.
+    BUILT_IN.forEach((b, i) => {
+      const cloudRow = byTitle.get(norm(b.title));
+      const ov = overrides[b.id] || {};
+      const merged = { ...b, ...ov };
+
+      if (!cloudRow) {                          // cloud has no match (rare) → insert local state
+        if (deletedIds.has(b.id) && !archivedIds.has(b.id)) return;
+        if (archivedIds.has(b.id)) {
+          const a = archivedItems.find(x => x.id === b.id);
+          inserts.push(rowFrom(a, uid, { source: 'builtin', status: 'archived',
+            archived_at: a.archivedAt || new Date().toISOString(), sort_order: i }));
+        } else {
+          inserts.push(rowFrom(merged, uid, { source: 'builtin', status: 'active', sort_order: i }));
+        }
+        return;
+      }
+
+      let patch = null;
+      if (archivedIds.has(b.id)) {
+        const a = archivedItems.find(x => x.id === b.id);
+        patch = { title: a.title, sub: a.sub || null, url: a.url || null, notes: a.notes || null,
+          cat: a.cat, status: 'archived', archived_at: a.archivedAt || new Date().toISOString() };
+      } else if (deletedIds.has(b.id)) {
+        patch = { status: 'deleted', deleted_at: new Date().toISOString() };
+      } else if (Object.keys(ov).length) {       // local edit, still active
+        patch = { title: merged.title, sub: merged.sub || null, url: merged.url || null,
+          notes: merged.notes || null, cat: merged.cat };
+      }
+      if (patch) updates.push({ id: cloudRow.id, patch });
+    });
+
+    // Active custom items → insert unless a same-titled custom already exists.
+    customItems.forEach((c, idx) => {
+      if (archivedIds.has(c.id)) return;
+      if (customTitles.has(norm(c.title))) return;
+      const merged = { ...c, ...(overrides[c.id] || {}) };
+      inserts.push(rowFrom(merged, uid, { source: 'custom', status: 'active', sort_order: 1000 + idx }));
+    });
+
+    // Archived custom items.
+    archivedItems.forEach((a, idx) => {
+      if (!a.id.startsWith('c')) return;         // built-in archives handled above
+      if (customTitles.has(norm(a.title))) return;
+      inserts.push(rowFrom(a, uid, { source: 'custom', status: 'archived',
+        archived_at: a.archivedAt || new Date().toISOString(), sort_order: 2000 + idx }));
+    });
+
+    // Execute: inserts first, then per-row patches.
+    if (inserts.length) {
+      const { error } = await db.from('items').insert(inserts);
+      if (error) throw error;
+    }
+    for (const u of updates) {
+      const { error } = await db.from('items')
+        .update({ ...u.patch, updated_at: new Date().toISOString() })
+        .eq('id', u.id);
+      if (error) throw error;
+    }
+
+    clearLocalData();
+    cloudItems = await fetchItems();
+    renderTabs(); renderMain(); renderRecentlyDeleted(); updateImportButton();
+
+    const n = inserts.length + updates.length;
+    showToast(n ? `Imported ${n} item${n !== 1 ? 's' : ''} from this device.` : 'Nothing new to import.', 'success');
+  } catch (err) {
+    console.error('Import failed:', err);
+    // Resync so any rows that did land are reflected and a retry de-dupes correctly.
+    try { cloudItems = await fetchItems(); renderTabs(); renderMain(); } catch {}
+    showToast('Import failed — your on-device data is untouched. You can try again.', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '⬆️ Import data from this device'; }
+  }
 }
 
 function showAuthMessage(text, type) {
