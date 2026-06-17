@@ -6,6 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#4F654D">
+<!-- Apply saved theme before first paint to avoid a flash of the wrong theme -->
+<script>(function(){try{var m=localStorage.getItem('instead-theme');if(m==='light'||m==='dark'){document.documentElement.setAttribute('data-theme',m);}}catch(e){}})();</script>
 <title>Instead</title>
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
@@ -25,21 +27,67 @@
   --shadow-hover:   var(--shadow-3);
   --radius:         14px;
 
+  /* Semantic colours — light theme.
+     --X       = "strong" solid colour, safe as a fill behind WHITE text (toasts, archive tab)
+     --X-text  = coloured text that sits ON the --X-bg tint or on surfaces
+     --X-bg    = subtle tint background
+     --X-border= border on the tint */
   /* Warning / amber notes */
   --warning:        var(--semantic-warning);
+  --warning-text:   var(--semantic-warning);
   --warning-bg:     #FFF8E7;
   --warning-border: #E0C060;
   --warning-hover:  #FFF0C0;
 
   /* Semantic success */
   --success:        var(--semantic-success);
+  --success-text:   var(--semantic-success);
   --success-bg:     #edfaf3;
   --success-border: #b2e8cf;
 
   /* Semantic error */
   --error:          var(--semantic-error);
+  --error-text:     var(--semantic-error);
   --error-bg:       #fdf0ee;
   --error-border:   #f0c4bb;
+}
+
+/* Semantic colours — dark theme (manual + auto), kept in sync */
+:root[data-theme="dark"] {
+  --warning:        #7A5A12;          /* strong fill (archive active tab) */
+  --warning-text:   #E8C56A;          /* light amber text on dark tint */
+  --warning-bg:     #2A2616;
+  --warning-border: #5C4F2A;
+  --warning-hover:  #353018;
+
+  --success:        #2E7D4F;
+  --success-text:   #6FCF97;
+  --success-bg:     #15241B;
+  --success-border: #2E5A40;
+
+  --error:          #C0392B;
+  --error-text:     #F08A7A;
+  --error-bg:       #2A1616;
+  --error-border:   #5C2A2A;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --warning:        #7A5A12;
+    --warning-text:   #E8C56A;
+    --warning-bg:     #2A2616;
+    --warning-border: #5C4F2A;
+    --warning-hover:  #353018;
+
+    --success:        #2E7D4F;
+    --success-text:   #6FCF97;
+    --success-bg:     #15241B;
+    --success-border: #2E5A40;
+
+    --error:          #C0392B;
+    --error-text:     #F08A7A;
+    --error-bg:       #2A1616;
+    --error-border:   #5C2A2A;
+  }
 }
 html, body { height: 100%; background: var(--bg); color: var(--text-primary); font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
 body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidden; }
@@ -86,8 +134,8 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
   padding: 10px 14px; border-radius: 8px; font-size: 13px;
   margin-bottom: 14px; line-height: 1.5; display: none;
 }
-.auth-message.error { background: var(--error-bg); color: var(--error); border: 1px solid var(--error-border); display: block; }
-.auth-message.success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); display: block; }
+.auth-message.error { background: var(--error-bg); color: var(--error-text); border: 1px solid var(--error-border); display: block; }
+.auth-message.success { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); display: block; }
 .auth-divider {
   display: flex; align-items: center; gap: 10px;
   font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
@@ -111,7 +159,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 .user-sync-row {
   background: var(--warning-bg); border: 1px solid var(--warning-border);
   border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;
-  font-size: 13px; color: var(--warning); line-height: 1.5;
+  font-size: 13px; color: var(--warning-text); line-height: 1.5;
 }
 .user-sync-row strong { display: block; margin-bottom: 2px; font-size: 14px; }
 
@@ -127,7 +175,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 .rd-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .rd-btn { padding: 5px 10px; border-radius: 14px; font-family: var(--font-body); font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--surface); background: transparent; color: var(--text-secondary); transition: all 0.15s; }
 .rd-btn:hover { background: var(--surface); }
-.rd-btn.danger { color: var(--error); border-color: var(--error-border); }
+.rd-btn.danger { color: var(--error-text); border-color: var(--error-border); }
 .rd-btn.danger:hover { background: var(--error-bg); }
 
 /* ── LISTS ── */
@@ -139,13 +187,13 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 .list-title { font-size: 15px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .list-meta { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
 .list-badge { display: inline-flex; align-items: center; border-radius: 14px; padding: 3px 8px; background: var(--surface); color: var(--text-secondary); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-.list-badge.public { background: var(--success-bg); color: var(--success); }
-.list-badge.editor { background: var(--warning-bg); color: var(--warning); }
+.list-badge.public { background: var(--success-bg); color: var(--success-text); }
+.list-badge.editor { background: var(--warning-bg); color: var(--warning-text); }
 .list-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .list-mini-btn { padding: 6px 10px; border-radius: 16px; border: 1.5px solid var(--surface); background: transparent; color: var(--text-secondary); font-family: var(--font-body); font-size: 12px; font-weight: 700; cursor: pointer; }
 .list-mini-btn:hover { background: var(--surface); }
 .list-mini-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-.list-mini-btn.danger { color: var(--error); border-color: var(--error-border); }
+.list-mini-btn.danger { color: var(--error-text); border-color: var(--error-border); }
 .list-item-remove { margin-left: auto; }
 .pending-share { border-color: var(--warning-border); background: var(--warning-bg); }
 .member-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--surface); }
@@ -184,7 +232,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 .card-body { flex: 1; min-width: 0; }
 .card-title { font-family: var(--font-head); font-size: 17px; font-weight: 700; color: var(--text-primary); line-height: 1.3; margin-bottom: 2px; }
 .card-sub { font-size: 13px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 2px; }
-.card-notes { font-size: 13px; color: var(--warning); background: var(--warning-bg); border-left: 3px solid var(--warning-border); border-radius: 0 6px 6px 0; padding: 6px 10px; margin-top: 8px; line-height: 1.5; white-space: pre-wrap; }
+.card-notes { font-size: 13px; color: var(--warning-text); background: var(--warning-bg); border-left: 3px solid var(--warning-border); border-radius: 0 6px 6px 0; padding: 6px 10px; margin-top: 8px; line-height: 1.5; white-space: pre-wrap; }
 .card-meta { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 .card-actions { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
 .btn-open { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; background: var(--primary); color: white; border: none; border-radius: 20px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; transition: background 0.15s, transform 0.1s; }
@@ -192,14 +240,14 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 .btn-open:active { transform: scale(0.96); }
 .btn-done { padding: 7px 14px; background: transparent; border: 1.5px solid var(--surface); color: var(--text-secondary); border-radius: 20px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
 .btn-done:hover { background: var(--surface); }
-.btn-edit { padding: 7px 12px; background: transparent; border: 1.5px solid var(--surface); color: var(--text-muted); border-radius: 20px; font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px; }
-.btn-edit:hover { background: var(--surface); color: var(--text-secondary); }
-.btn-restore { padding: 7px 14px; background: transparent; border: 1.5px solid var(--surface); color: var(--text-muted); border-radius: 20px; font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.btn-edit { padding: 7px 12px; background: transparent; border: 1.5px solid var(--surface); color: var(--text-secondary); border-radius: 20px; font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px; }
+.btn-edit:hover { background: var(--surface); color: var(--text-primary); }
+.btn-restore { padding: 7px 14px; background: transparent; border: 1.5px solid var(--surface); color: var(--text-secondary); border-radius: 20px; font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
 .btn-restore:hover { background: var(--surface); }
-.btn-perm-delete { padding: 7px 12px; background: transparent; border: none; color: var(--text-muted); border-radius: 20px; font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: color 0.15s; }
-.btn-perm-delete:hover { color: var(--error); }
+.btn-perm-delete { padding: 7px 12px; background: transparent; border: none; color: var(--text-secondary); border-radius: 20px; font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: color 0.15s; }
+.btn-perm-delete:hover { color: var(--error-text); }
 .card.archived { background: var(--warning-bg); border-left: 4px solid var(--warning-border); box-shadow: none; }
-.card.archived .card-title { color: var(--warning); }
+.card.archived .card-title { color: var(--warning-text); }
 
 /* ── SHOW DONE ── */
 .show-done-wrap { display: flex; justify-content: flex-end; margin-bottom: 4px; }
@@ -224,7 +272,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 .sheet.open { display: flex; }
 .sheet-card { background: var(--surface-elevated); border-radius: 20px; padding: 24px 20px; width: 100%; max-width: 480px; box-shadow: 0 8px 40px rgba(28,27,24,0.25); animation: slideUp 0.25s ease; max-height: 90dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-.sheet-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--primary); margin-bottom: 10px; }
+.sheet-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
 .sheet-emoji { font-size: 38px; margin-bottom: 10px; display: block; }
 .sheet-title { font-family: var(--font-head); font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 5px; line-height: 1.25; }
 .sheet-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5; }
@@ -233,11 +281,11 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 .btn-sheet-primary:hover { background: var(--primary-hover); }
 .btn-sheet-secondary { padding: 13px; background: var(--surface); color: var(--text-secondary); border: none; border-radius: 12px; font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
 .btn-sheet-secondary:hover { background: var(--border); }
-.btn-sheet-ghost { padding: 11px; background: transparent; color: var(--text-muted); border: none; font-family: var(--font-body); font-size: 14px; cursor: pointer; border-radius: 12px; }
+.btn-sheet-ghost { padding: 11px; background: transparent; color: var(--text-secondary); border: none; font-family: var(--font-body); font-size: 14px; cursor: pointer; border-radius: 12px; }
 .btn-sheet-ghost:hover { background: var(--surface); }
-.btn-sheet-archive { padding: 14px; background: var(--warning-bg); color: var(--warning); border: 1.5px solid var(--warning-border); border-radius: 12px; font-family: var(--font-body); font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.btn-sheet-archive { padding: 14px; background: var(--warning-bg); color: var(--warning-text); border: 1.5px solid var(--warning-border); border-radius: 12px; font-family: var(--font-body); font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
 .btn-sheet-archive:hover { background: #FFF0C0; }
-.btn-sheet-danger { padding: 13px; background: transparent; color: var(--error); border: 1.5px solid var(--error-border); border-radius: 12px; font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.btn-sheet-danger { padding: 13px; background: transparent; color: var(--error-text); border: 1.5px solid var(--error-border); border-radius: 12px; font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
 .btn-sheet-danger:hover { background: var(--error-bg); }
 
 /* ── FORMS ── */
@@ -255,7 +303,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 .btn-form-submit:disabled { background: var(--text-muted); cursor: not-allowed; }
 .btn-form-cancel { padding: 13px 18px; background: var(--surface); color: var(--text-secondary); border: none; border-radius: 12px; font-family: var(--font-body); font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
 .btn-form-cancel:hover { background: var(--border); }
-.notes-hint { font-size: 11px; color: var(--warning); margin-top: 4px; }
+.notes-hint { font-size: 11px; color: var(--warning-text); margin-top: 4px; }
 
 /* ── TOAST ── */
 .toast {
@@ -287,6 +335,10 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
     <span class="app-subtitle" id="headerCount"></span>
   </div>
   <div class="header-actions">
+    <!-- Theme toggle: cycles Auto → Light → Dark -->
+    <button class="icon-btn" id="themeBtn" onclick="cycleTheme()" title="Theme: Auto" aria-label="Switch theme (current: Auto)">
+      <span id="themeIcon" aria-hidden="true"></span>
+    </button>
     <!-- Auth button: shows person icon when logged out, user initial when logged in -->
     <button class="auth-btn logged-out" id="authBtn" title="Sign in" aria-label="Sign in">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -350,16 +402,16 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 <div class="sheet" id="addSheet">
   <div class="sheet-card">
     <div class="form-h2">Add to Instead</div>
-    <div class="form-group"><label>Title</label><input type="text" id="addTitle" placeholder="What is it?" /></div>
-    <div class="form-group"><label>Description</label><textarea id="addSub" placeholder="Any context? (optional)"></textarea></div>
+    <div class="form-group"><label for="addTitle">Title</label><input type="text" id="addTitle" placeholder="What is it?" /></div>
+    <div class="form-group"><label for="addSub">Description</label><textarea id="addSub" placeholder="Any context? (optional)"></textarea></div>
     <div class="form-group">
-      <label>Your notes</label>
+      <label for="addNotes">Your notes</label>
       <textarea id="addNotes" class="notes-ta" placeholder="Why did you save this? What do you want to get from it?"></textarea>
       <div class="notes-hint">✏️ This is your space — thoughts, reasons, what to look for</div>
     </div>
-    <div class="form-group"><label>Link (optional)</label><input type="url" id="addUrl" placeholder="https://..." /></div>
+    <div class="form-group"><label for="addUrl">Link (optional)</label><input type="url" id="addUrl" placeholder="https://..." /></div>
     <div class="form-group">
-      <label>Category</label>
+      <label for="addCat">Category</label>
       <select id="addCat">
         <option value="nourishment">🌱 Nourishment</option>
         <option value="professional">💼 Professional</option>
@@ -379,16 +431,16 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 <div class="sheet" id="editSheet">
   <div class="sheet-card">
     <div class="form-h2" id="editHeading">Edit item</div>
-    <div class="form-group"><label>Title</label><input type="text" id="editTitle" /></div>
-    <div class="form-group"><label>Description</label><textarea id="editSub"></textarea></div>
+    <div class="form-group"><label for="editTitle">Title</label><input type="text" id="editTitle" /></div>
+    <div class="form-group"><label for="editSub">Description</label><textarea id="editSub"></textarea></div>
     <div class="form-group">
-      <label>Your notes</label>
+      <label for="editNotes">Your notes</label>
       <textarea id="editNotes" class="notes-ta" placeholder="Why did you save this? What do you want to get from it?"></textarea>
       <div class="notes-hint">✏️ This is your space — thoughts, reasons, what to look for</div>
     </div>
-    <div class="form-group"><label>Link</label><input type="url" id="editUrl" placeholder="https://..." /></div>
+    <div class="form-group"><label for="editUrl">Link</label><input type="url" id="editUrl" placeholder="https://..." /></div>
     <div class="form-group">
-      <label>Category</label>
+      <label for="editCat">Category</label>
       <select id="editCat">
         <option value="nourishment">🌱 Nourishment</option>
         <option value="professional">💼 Professional</option>
@@ -416,15 +468,15 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
     <div class="auth-message" id="authMessage"></div>
 
     <div class="form-group" id="displayNameGroup" style="display:none">
-      <label>Your name (optional)</label>
+      <label for="authDisplayName">Your name (optional)</label>
       <input type="text" id="authDisplayName" placeholder="What should we call you?" autocomplete="name" />
     </div>
     <div class="form-group">
-      <label>Email</label>
+      <label for="authEmail">Email</label>
       <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email" />
     </div>
     <div class="form-group">
-      <label>Password</label>
+      <label for="authPassword">Password</label>
       <input type="password" id="authPassword" placeholder="Your password" autocomplete="current-password" />
     </div>
 
@@ -473,7 +525,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
   <div class="sheet-card">
     <div class="form-h2" id="listSheetHeading">New list</div>
     <div class="form-group">
-      <label>List name</label>
+      <label for="listTitleInput">List name</label>
       <input type="text" id="listTitleInput" placeholder="Weekend reads" />
     </div>
     <div class="toggle-row">
@@ -850,7 +902,7 @@ function renderListSheetSections(list) {
 
   const url = list.share_slug ? publicListUrl(list) : '';
   linkEl.innerHTML = `<div class="form-group">
-    <label>Share link</label>
+    <label for="listShareUrl">Share link</label>
     <div class="copy-row">
       <input id="listShareUrl" readonly value="${esc(url || 'Save this list to create a link')}" />
       <button class="list-mini-btn" onclick="copyListLink('${list.id}')">Copy</button>
@@ -858,11 +910,11 @@ function renderListSheetSections(list) {
   </div>`;
 
   inviteEl.innerHTML = `<div class="form-group">
-    <label>Email invite</label>
+    <label for="inviteEmailInput">Email invite</label>
     <input type="email" id="inviteEmailInput" placeholder="person@example.com" />
   </div>
   <div class="form-group">
-    <label>Permission</label>
+    <label for="invitePermissionInput">Permission</label>
     <select id="invitePermissionInput">
       <option value="viewer">Viewer</option>
       <option value="editor">Editor</option>
@@ -2175,6 +2227,56 @@ window.addEventListener('hashchange', () => { handleHashRoute(); });
 
 
 // ══════════════════════════════════════════════════════════
+// THEME (Light / Dark / Auto)
+// ══════════════════════════════════════════════════════════
+const THEME_KEY = 'instead-theme';
+const THEME_ORDER = ['auto', 'light', 'dark'];
+const THEME_ICONS = {
+  // Auto: half-filled circle  ·  Light: sun  ·  Dark: moon
+  auto: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 3a9 9 0 000 18z" fill="currentColor"/></svg>',
+  light:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>',
+  dark: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 019.5 4 7 7 0 1020 14.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+};
+const THEME_LABELS = { auto: 'Auto', light: 'Light', dark: 'Dark' };
+
+function getThemePref() {
+  try { const v = localStorage.getItem(THEME_KEY); return THEME_ORDER.includes(v) ? v : 'auto'; }
+  catch (e) { return 'auto'; }
+}
+function resolvedDark(pref) {
+  if (pref === 'dark') return true;
+  if (pref === 'light') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function applyTheme(pref) {
+  const root = document.documentElement;
+  if (pref === 'auto') root.removeAttribute('data-theme');
+  else root.setAttribute('data-theme', pref);
+
+  const dark = resolvedDark(pref);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', dark ? '#141614' : '#4F654D');
+
+  const icon = document.getElementById('themeIcon');
+  const btn  = document.getElementById('themeBtn');
+  if (icon) icon.innerHTML = THEME_ICONS[pref];
+  if (btn) {
+    btn.title = 'Theme: ' + THEME_LABELS[pref];
+    btn.setAttribute('aria-label', 'Switch theme (current: ' + THEME_LABELS[pref] + ')');
+  }
+}
+function cycleTheme() {
+  const next = THEME_ORDER[(THEME_ORDER.indexOf(getThemePref()) + 1) % THEME_ORDER.length];
+  try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  applyTheme(next);
+}
+// Keep meta theme-color in sync with OS changes while in Auto mode
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (getThemePref() === 'auto') applyTheme('auto');
+});
+
+
+// ══════════════════════════════════════════════════════════
 // BACKUP DATA
 // ══════════════════════════════════════════════════════════
 function backupData() {
@@ -2208,6 +2310,7 @@ if ('serviceWorker' in navigator) {
 
 
 // ── INIT ────────────────────────────────────────────────
+applyTheme(getThemePref());
 handleHashRoute();
 </script>
 </body>
