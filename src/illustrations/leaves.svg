@@ -1,0 +1,17 @@
+<svg width="80" height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <!-- Stem -->
+  <path d="M40 65 Q38 50 36 38 Q34 26 38 14" stroke="#B7C2B0" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Left large leaf -->
+  <path d="M36 38 Q20 30 18 42 Q24 48 36 44 Q38 41 36 38Z" stroke="#B7C2B0" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <!-- Left leaf vein -->
+  <path d="M36 38 Q27 40 22 42" stroke="#B7C2B0" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+  <!-- Right large leaf -->
+  <path d="M37 26 Q53 18 56 30 Q50 36 37 32 Q36 29 37 26Z" stroke="#B7C2B0" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <!-- Right leaf vein -->
+  <path d="M37 26 Q46 28 52 30" stroke="#B7C2B0" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+  <!-- Small top leaf -->
+  <path d="M38 14 Q30 7 32 16 Q35 16 38 14Z" stroke="#B7C2B0" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <!-- Small side sprig -->
+  <path d="M36 52 Q26 48 24 54" stroke="#B7C2B0" stroke-width="1.4" stroke-linecap="round"/>
+  <path d="M24 54 Q18 52 20 57 Q22 58 24 54Z" stroke="#B7C2B0" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+</svg>
