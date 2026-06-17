@@ -1,0 +1,321 @@
+{
+  "Button": {
+    "variants": ["primary", "secondary", "destructive"],
+    "states": ["default", "hover", "active", "focus", "disabled"],
+    "specs": {
+      "minHeight": "44px",
+      "preferredHeight": "48px",
+      "minTouchTarget": "44x44px"
+    },
+    "tokens": {
+      "primary": {
+        "background": "actionPrimary",
+        "backgroundHover": "actionPrimaryHover",
+        "backgroundActive": "actionPrimaryActive",
+        "text": "textInverse",
+        "backgroundDisabled": "disabled"
+      },
+      "secondary": {
+        "background": "transparent",
+        "border": "actionPrimary",
+        "text": "actionPrimary"
+      },
+      "destructive": {
+        "background": "error",
+        "text": "textInverse"
+      }
+    },
+    "accessibility": {
+      "keyboardAccessible": true,
+      "focusRing": "3px solid {focus} at offset 2px",
+      "disabledNoOpacityReduction": true
+    }
+  },
+  "Input": {
+    "variants": ["default", "search", "error"],
+    "states": ["default", "focus", "error", "disabled"],
+    "specs": {
+      "height": "48px",
+      "borderWidth": "2px"
+    },
+    "tokens": {
+      "default": {
+        "background": "surface",
+        "border": "border",
+        "borderFocus": "focus",
+        "text": "textPrimary",
+        "label": "textPrimary"
+      },
+      "error": {
+        "border": "error",
+        "text": "error"
+      }
+    },
+    "accessibility": {
+      "requiresVisibleLabel": true,
+      "noPlaceholderOnlyLabel": true,
+      "keyboardAccessible": true
+    }
+  },
+  "Search": {
+    "variants": ["default"],
+    "states": ["default", "active", "focus"],
+    "specs": {
+      "height": "48px",
+      "borderWidth": "2px"
+    },
+    "tokens": {
+      "background": "surface",
+      "border": "border",
+      "borderFocus": "focus",
+      "text": "textPrimary",
+      "icon": "textMuted"
+    },
+    "accessibility": {
+      "searchIconDecorative": true,
+      "labelVisiblyHiddenOk": true,
+      "clearButtonKeyboardAccessible": true
+    }
+  },
+  "Checkbox": {
+    "variants": ["default"],
+    "states": ["unchecked", "checked", "indeterminate", "focus", "disabled"],
+    "specs": {
+      "minSize": "24x24px",
+      "labelClickTargetIncluded": true
+    },
+    "tokens": {
+      "checked": {
+        "background": "actionPrimary",
+        "indicator": "textInverse"
+      },
+      "unchecked": {
+        "border": "border"
+      }
+    },
+    "accessibility": {
+      "keyboardAccessible": true,
+      "stateAnnounced": true
+    }
+  },
+  "Radio": {
+    "variants": ["default"],
+    "states": ["unselected", "selected", "focus", "disabled"],
+    "specs": {
+      "size": "24x24px",
+      "visibleSelectedIndicator": true
+    },
+    "tokens": {
+      "selected": {
+        "border": "actionPrimary",
+        "indicator": "actionPrimary"
+      }
+    },
+    "accessibility": {
+      "keyboardAccessible": true,
+      "stateAnnounced": true
+    }
+  },
+  "Toggle": {
+    "variants": ["default"],
+    "states": ["off", "on", "focus", "disabled"],
+    "specs": {
+      "minWidth": "52px",
+      "minHeight": "28px"
+    },
+    "tokens": {
+      "on": {
+        "track": "actionPrimary",
+        "thumb": "textInverse"
+      },
+      "off": {
+        "track": "border",
+        "thumb": "textInverse"
+      }
+    },
+    "accessibility": {
+      "stateAnnounced": true,
+      "keyboardAccessible": true,
+      "role": "switch"
+    }
+  },
+  "Card": {
+    "variants": ["default", "interactive"],
+    "states": ["default", "hover", "focus"],
+    "specs": {
+      "minPadding": "24px"
+    },
+    "tokens": {
+      "background": "surface",
+      "border": "border",
+      "backgroundHover": "surfaceRaised"
+    },
+    "accessibility": {
+      "noHoverOnlyContent": true,
+      "interactiveVariantKeyboardAccessible": true
+    }
+  },
+  "Sheet": {
+    "variants": ["default", "fullscreen"],
+    "states": ["closed", "open"],
+    "specs": {
+      "backdropColor": "rgba(0,0,0,0.4)"
+    },
+    "tokens": {
+      "background": "surfaceRaised",
+      "border": "border"
+    },
+    "accessibility": {
+      "trapsFocus": true,
+      "restoresFocusOnClose": true,
+      "closesOnEscape": true,
+      "role": "dialog",
+      "ariaModal": true
+    }
+  },
+  "Modal": {
+    "variants": ["default"],
+    "states": ["closed", "open"],
+    "tokens": {
+      "background": "surfaceRaised",
+      "border": "border"
+    },
+    "accessibility": {
+      "trapsFocus": true,
+      "restoresFocusOnClose": true,
+      "closesOnEscape": true,
+      "role": "dialog",
+      "ariaModal": true
+    }
+  },
+  "Toast": {
+    "variants": ["info", "success", "warning", "error"],
+    "states": ["visible", "dismissed"],
+    "tokens": {
+      "info": { "background": "info", "text": "textInverse" },
+      "success": { "background": "success", "text": "textInverse" },
+      "warning": { "background": "warning", "text": "textInverse" },
+      "error": { "background": "error", "text": "textInverse" }
+    },
+    "accessibility": {
+      "noCriticalAutoDismiss": true,
+      "role": "alert",
+      "ariaLive": "polite"
+    }
+  },
+  "Tabs": {
+    "variants": ["default"],
+    "states": ["default", "active", "focus"],
+    "tokens": {
+      "active": {
+        "text": "actionPrimary",
+        "indicator": "actionPrimary"
+      },
+      "default": {
+        "text": "textSecondary"
+      }
+    },
+    "accessibility": {
+      "keyboardNav": ["ArrowLeft", "ArrowRight", "Home", "End"],
+      "role": "tablist",
+      "tabRole": "tab",
+      "panelRole": "tabpanel"
+    }
+  },
+  "Dropdown": {
+    "variants": ["default"],
+    "states": ["closed", "open", "focus"],
+    "tokens": {
+      "background": "surfaceRaised",
+      "border": "border",
+      "itemHover": "surface",
+      "text": "textPrimary"
+    },
+    "accessibility": {
+      "keyboardNav": ["ArrowUp", "ArrowDown", "Enter", "Escape", "Tab"],
+      "role": "listbox",
+      "optionRole": "option"
+    }
+  },
+  "Sidebar": {
+    "variants": ["default", "collapsed"],
+    "states": ["default", "collapsed"],
+    "specs": {
+      "minWidth": "280px",
+      "collapsible": true
+    },
+    "tokens": {
+      "background": "surface",
+      "border": "border",
+      "activeItem": "actionPrimary",
+      "activeItemText": "textInverse"
+    },
+    "accessibility": {
+      "collapsibleButAlwaysAccessible": true,
+      "keyboardAccessible": true,
+      "role": "navigation"
+    }
+  },
+  "NavigationItem": {
+    "variants": ["default", "active"],
+    "states": ["default", "hover", "active", "focus"],
+    "specs": {
+      "minHeight": "44px"
+    },
+    "tokens": {
+      "active": {
+        "background": "actionPrimary",
+        "text": "textInverse"
+      },
+      "default": {
+        "text": "textSecondary",
+        "backgroundHover": "surface"
+      }
+    },
+    "accessibility": {
+      "keyboardAccessible": true,
+      "ariaCurrent": "page for active item"
+    }
+  },
+  "EmptyState": {
+    "requiredElements": ["illustration", "guidanceText", "action"],
+    "tokens": {
+      "text": "textSecondary",
+      "heading": "textPrimary"
+    },
+    "illustration": {
+      "subject": "partridge",
+      "aria": "aria-hidden=\"true\""
+    }
+  },
+  "LoadingState": {
+    "variants": ["skeleton", "spinner"],
+    "specs": {
+      "preferredVariant": "skeleton",
+      "spinnerMaxBeforeAlternative": "3s"
+    },
+    "tokens": {
+      "skeleton": {
+        "background": "surface",
+        "shimmer": "border"
+      }
+    }
+  },
+  "Icon": {
+    "specs": {
+      "style": "outline",
+      "strokeWidth": "1.75px",
+      "baseGrid": "24x24px",
+      "minTouchTarget": "44x44px"
+    },
+    "tokens": {
+      "default": "textSecondary",
+      "active": "actionPrimary",
+      "muted": "textMuted"
+    },
+    "accessibility": {
+      "standaloneRequiresAriaLabel": true,
+      "noColorAlone": true
+    }
+  }
+}
