@@ -39,9 +39,23 @@
   --accent: #3F6B3D;
 
   --semantic-success: var(--color-success);
+  --semantic-success-fill: var(--semantic-success);
+  --semantic-success-text: var(--semantic-success);
   --semantic-warning: var(--color-warning);
+  --semantic-warning-fill: var(--semantic-warning);
+  --semantic-warning-text: var(--semantic-warning);
   --semantic-error: var(--color-error);
+  --semantic-error-fill: var(--semantic-error);
+  --semantic-error-text: var(--semantic-error);
   --semantic-info: var(--color-info);
+
+  --semantic-success-bg: #EDFAF3;
+  --semantic-success-border: #B2E8CF;
+  --semantic-warning-bg: #FFF8E7;
+  --semantic-warning-border: #E0C060;
+  --semantic-warning-hover: #FFF0C0;
+  --semantic-error-bg: #FDF0EE;
+  --semantic-error-border: #F0C4BB;
 
   --disabled: #CFCFCF;
   --focus-ring: var(--color-focus);
@@ -73,9 +87,23 @@
   --accent: #A9CDA4;
 
   --semantic-success: #4CAF72;
+  --semantic-success-fill: #2E7D4F;
+  --semantic-success-text: #6FCF97;
   --semantic-warning: #E8A020;
+  --semantic-warning-fill: #7A5A12;
+  --semantic-warning-text: #E8C56A;
   --semantic-error: #E05555;
+  --semantic-error-fill: #C0392B;
+  --semantic-error-text: #F08A7A;
   --semantic-info: #4A8FD4;
+
+  --semantic-success-bg: #15241B;
+  --semantic-success-border: #2E5A40;
+  --semantic-warning-bg: #2A2616;
+  --semantic-warning-border: #5C4F2A;
+  --semantic-warning-hover: #353018;
+  --semantic-error-bg: #2A1616;
+  --semantic-error-border: #5C2A2A;
 
   --disabled: #4A4E4A;
   --focus-ring: #5B91F4;
@@ -101,9 +129,23 @@
     --accent: #A9CDA4;
 
     --semantic-success: #4CAF72;
+    --semantic-success-fill: #2E7D4F;
+    --semantic-success-text: #6FCF97;
     --semantic-warning: #E8A020;
+    --semantic-warning-fill: #7A5A12;
+    --semantic-warning-text: #E8C56A;
     --semantic-error: #E05555;
+    --semantic-error-fill: #C0392B;
+    --semantic-error-text: #F08A7A;
     --semantic-info: #4A8FD4;
+
+    --semantic-success-bg: #15241B;
+    --semantic-success-border: #2E5A40;
+    --semantic-warning-bg: #2A2616;
+    --semantic-warning-border: #5C4F2A;
+    --semantic-warning-hover: #353018;
+    --semantic-error-bg: #2A1616;
+    --semantic-error-border: #5C2A2A;
 
     --disabled: #4A4E4A;
     --focus-ring: #5B91F4;
