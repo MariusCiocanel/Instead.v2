@@ -35,6 +35,8 @@
   --primary-hover: #415541;
   --primary-active: #364838;
   --secondary: var(--color-leaf-500);
+  /* --accent: green used as *text/icon* on surfaces (not as a fill behind white text) */
+  --accent: #3F6B3D;
 
   --semantic-success: var(--color-success);
   --semantic-warning: var(--color-warning);
@@ -45,9 +47,42 @@
   --focus-ring: var(--color-focus);
 }
 
-/* ─── Dark Theme ─── */
+/* ─── Dark Theme ───────────────────────────────────────────────
+   Applied two ways so the app supports a manual Light/Dark/Auto toggle:
+   1. :root[data-theme="dark"]  — explicit manual selection
+   2. @media (prefers-color-scheme: dark) when no explicit theme is set — "auto"
+   Keep the two value blocks in sync. */
+:root[data-theme="dark"] {
+  --bg: #141614;
+  --surface: #1E221E;
+  --surface-elevated: #252A25;
+  --border: #3A423A;
+  --border-strong: var(--color-leaf-500);
+
+  --text-primary: #F7F6F2;
+  --text-secondary: #D6D9D2;
+  --text-muted: #9DA89A;
+  --text-inverse: #1E1E1E;
+
+  /* Darker fill so WHITE button text passes APCA (white on this ≈ Lc 77) */
+  --primary: #54824F;
+  --primary-hover: #5E9058;
+  --primary-active: #6A9C64;
+  --secondary: #8FA38C;
+  /* Light green for green-as-text on dark surfaces */
+  --accent: #A9CDA4;
+
+  --semantic-success: #4CAF72;
+  --semantic-warning: #E8A020;
+  --semantic-error: #E05555;
+  --semantic-info: #4A8FD4;
+
+  --disabled: #4A4E4A;
+  --focus-ring: #5B91F4;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
     --bg: #141614;
     --surface: #1E221E;
     --surface-elevated: #252A25;
@@ -59,10 +94,11 @@
     --text-muted: #9DA89A;
     --text-inverse: #1E1E1E;
 
-    --primary: #6C9469;
-    --primary-hover: #7DAA7A;
-    --primary-active: #8EBE8B;
+    --primary: #54824F;
+    --primary-hover: #5E9058;
+    --primary-active: #6A9C64;
     --secondary: #8FA38C;
+    --accent: #A9CDA4;
 
     --semantic-success: #4CAF72;
     --semantic-warning: #E8A020;
