@@ -53,17 +53,25 @@ All three verified against a throwaway Supabase account, driven through the live
 Schema exists (`lists`, `list_items`, `list_shares`). RLS foundation is sound (the
 `SECURITY DEFINER` helpers) — build on those, do NOT reintroduce cross-table policy subqueries.
 
-_Implementation note: Phase 4 sharing has been added in `index.html` and
-`supabase/migrations/20260616_phase4_sharing.sql`. Live Supabase migration and
-end-to-end verification are still required before marking it shipped._
+_Status (2026-06-18): the migrations are applied live and the **email-invite path
+(Option 1)** is verified end-to-end against two real accounts. Decision settled:
+sharing targets a person by **email lookup** (private, permissioned), via the
+`create_list_share_by_email` RPC; public `share_slug` links remain available too._
 
-6. **Lists data layer** — CRUD for `lists` (create/rename/delete, `is_public`, `share_slug`), cloud-only.
-7. **Lists UI** — a surface (sheet or tab) to view/create/manage lists.
-8. **Add/remove items to lists** — `list_items` writes + an "Add to list" affordance on cards.
-9. **Share a list** — create `list_shares` (pending). _See open decision below._
-10. **Accept / view shared lists** — recipient sees pending shares, accepts (`accepted=true`),
-    reads shared lists + items (relies on the RLS helpers), respecting `permission`.
+_Live-migration fix found during verification: the DB carried an early draft's
+`list_shares_permission_check = ('view','edit')` constraint, which the guarded add in
+`20260616_phase4_sharing.sql` skipped — every `'viewer'`/`'editor'` invite was rejected.
+Corrected in `supabase/migrations/20260618_fix_list_shares_permission_constraint.sql`._
+
+6. ~~**Lists data layer**~~ — ✅ CRUD for `lists` works live (create/add-item tested).
+7. ~~**Lists UI**~~ — ✅ Lists tab + Manage sheet present and functional.
+8. ~~**Add/remove items to lists**~~ — ✅ `list_items` writes + "Add to list" affordance work.
+9. ~~**Share a list**~~ — ✅ owner invites by email → pending `list_shares` row created.
+10. ~~**Accept / view shared lists**~~ — ✅ recipient sees the pending invite, accepts, reads
+    the shared items; **viewer** is read-only, **editor** can add/remove (RLS-enforced).
 11. **Public lists** — read-only public view via `share_slug` for `is_public` lists (no auth).
+    _Partially exercised (a public list is readable by another account); a no-auth public
+    `?share=` view pass is still worth a dedicated check._
 
 ## D. Phase 5 — Exact-time purge (optional)
 

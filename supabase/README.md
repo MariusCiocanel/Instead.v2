@@ -12,9 +12,17 @@ live Supabase project.
 - `migrations/20260616_phase4_sharing.sql` adds Phase 4 sharing helpers, RLS
   updates, invite RPCs, viewer/editor permissions, public list reads, and the
   minimum list/share columns used by the static app.
+- `migrations/20260618_fix_list_shares_permission_constraint.sql` repairs the
+  `list_shares_permission_check` constraint on databases that still carried an
+  early draft's `('view', 'edit')` vocabulary. The Phase 4 migration adds the
+  correct `('viewer', 'editor')` constraint only when one is absent (it is guarded
+  by `exception when duplicate_object`), so a pre-existing stale constraint was
+  silently kept and rejected every `'viewer'`/`'editor'` invite. This drops and
+  recreates it unconditionally. (Fresh projects are unaffected — running it after
+  the Phase 4 migration simply recreates the same correct constraint.)
 
-Apply these migrations to a fresh Supabase project after the base tables exist
-and before testing Phase 4 sharing.
+Apply these migrations to a fresh Supabase project, in filename (date) order,
+after the base tables exist and before testing Phase 4 sharing.
 
 ## Verification Queries
 
