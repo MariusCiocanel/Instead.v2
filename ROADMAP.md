@@ -24,16 +24,22 @@ Relevant commits on `main`: `bb4c20c` (scaffolding) → `750e0b4` (seed/fetch/pu
 
 ---
 
-## A. Finish Phase 3 verification (small, do first)
+## A. Finish Phase 3 verification (small, do first) — ✅ DONE (2026-06-18)
 
-1. **Guest-mode regression** — sign out, confirm legacy localStorage flow is unchanged
-   (add/edit/archive/delete/surprise/backup), then sign back in.
-   _Checkpoint:_ signed-out flow identical to legacy; sign-in reloads cloud.
-2. **Import built-in patch path** — on a throwaway account, edit/archive/delete a built-in
-   as guest, then import; confirm built-ins are patched in place (matched by URL), no dupes.
-   _Checkpoint:_ one row per built-in, local changes reflected.
-3. **30-day purge** — insert a `deleted` row with `deleted_at` backdated >30 days, sign in,
-   confirm the sweep hard-deletes it while a recent one survives.
+All three verified against a throwaway Supabase account, driven through the live app.
+
+1. ~~**Guest-mode regression**~~ — ✅ PASS. Signed-out add/edit/archive/restore/delete/surprise/backup
+   all work and persist across reload. Note: "Recently Deleted" (restore / delete-forever) is
+   **cloud-only** — in guest mode custom deletes are permanent and built-ins just hide.
+2. ~~**Import built-in patch path**~~ — ✅ PASS, with one bug found & fixed. Both the
+   auto-migration (first login → `migrateLocalToCloud`) and the manual import
+   (`importLocalData`, URL-matched) patch built-ins in place with no duplicate rows; custom
+   items insert and de-dupe correctly.
+   - **Bug fixed:** `b23` "Fixing a Hole Short" shared an identical URL with `b4` "Fixing a Hole",
+     so the URL-keyed `byKey` map collided and a local edit to one was patched onto the other.
+     Removed the redundant `b23` (`df2bca9`); `BUILT_IN` now has no duplicate URLs.
+3. ~~**30-day purge**~~ — ✅ PASS. A `deleted` row backdated 40 days is hard-deleted by
+   `purgeOldDeleted()` (the function `syncOnLogin` runs); a 2-day-old `deleted` row survives.
 
 ## B. Phase 3 hardening (optional, low effort)
 
