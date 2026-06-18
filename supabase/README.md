@@ -21,8 +21,34 @@ live Supabase project.
   recreates it unconditionally. (Fresh projects are unaffected — running it after
   the Phase 4 migration simply recreates the same correct constraint.)
 
+- `migrations/20260618_phase5_scheduled_purge.sql` adds a server-side daily
+  `pg_cron` sweep (`purge_old_deleted_items()`) that hard-deletes every user's
+  `deleted` items older than 30 days, independent of logins. The client-side
+  login sweep (`purgeOldDeleted` in `index.html`) is retained as a fast-path
+  backup. Requires the `pg_cron` extension (the migration creates it; on Supabase
+  it can also be enabled in Dashboard → Database → Extensions).
+
 Apply these migrations to a fresh Supabase project, in filename (date) order,
 after the base tables exist and before testing Phase 4 sharing.
+
+### Scheduled purge (Phase 5) checks
+
+```sql
+-- The cron job is registered and active
+select jobid, jobname, schedule, active, command
+from cron.job
+where jobname = 'purge-old-deleted-items';
+
+-- Run the sweep on demand; returns the row count it hard-deleted
+select public.purge_old_deleted_items();
+
+-- Recent run history (success/failure)
+select status, return_message, start_time, end_time
+from cron.job_run_details
+where jobid = (select jobid from cron.job where jobname = 'purge-old-deleted-items')
+order by start_time desc
+limit 5;
+```
 
 ## Verification Queries
 
