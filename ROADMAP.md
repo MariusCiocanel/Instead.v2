@@ -69,9 +69,9 @@ Corrected in `supabase/migrations/20260618_fix_list_shares_permission_constraint
 9. ~~**Share a list**~~ — ✅ owner invites by email → pending `list_shares` row created.
 10. ~~**Accept / view shared lists**~~ — ✅ recipient sees the pending invite, accepts, reads
     the shared items; **viewer** is read-only, **editor** can add/remove (RLS-enforced).
-11. **Public lists** — read-only public view via `share_slug` for `is_public` lists (no auth).
-    _Partially exercised (a public list is readable by another account); a no-auth public
-    `?share=` view pass is still worth a dedicated check._
+11. ~~**Public lists**~~ — ✅ verified signed-out. A public list's `?share=` slug renders
+    read-only with no auth (Open links only, no edit controls). Security boundary confirmed:
+    a **private** list's slug shows the invite wall and leaks no list/items to anon (RLS).
 
 ## D. Phase 5 — Exact-time purge (optional)
 
