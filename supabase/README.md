@@ -21,6 +21,11 @@ live Supabase project.
   recreates it unconditionally. (Fresh projects are unaffected — running it after
   the Phase 4 migration simply recreates the same correct constraint.)
 
+- `migrations/20260619_builtin_seed_unique_index.sql` adds a partial unique index
+  (`items_builtin_unique` on `(user_id, title, coalesce(url,''))` where
+  `source = 'builtin'`) so a duplicate seed batch is rejected at the database, even
+  if the client `syncInFlight` guard ever fails. Run the pre-flight duplicate check
+  in that file's header before applying — index creation fails if dupes already exist.
 - `migrations/20260618_phase5_scheduled_purge.sql` adds a server-side daily
   `pg_cron` sweep (`purge_old_deleted_items()`) that hard-deletes every user's
   `deleted` items older than 30 days, independent of logins. The client-side

@@ -43,8 +43,11 @@ All three verified against a throwaway Supabase account, driven through the live
 
 ## B. Phase 3 hardening (optional, low effort)
 
-4. **DB-level seed safety net** — partial unique index on `items(user_id, source, title, url)`
-   for built-ins, so a future concurrency bug can't double-seed even if the client guard fails.
+4. ~~**DB-level seed safety net**~~ — ✅ implemented in
+   `supabase/migrations/20260619_builtin_seed_unique_index.sql`: partial unique index
+   `items_builtin_unique` on `(user_id, title, coalesce(url,''))` where `source='builtin'`,
+   so a duplicate seed batch is rejected at the DB even if the client guard fails.
+   _Apply live after the pre-flight duplicate check (see the migration header)._
 5. **Cloud-aware backup** — `backupData()` should export from Supabase when signed in
    (currently exports in-memory/local only).
 
