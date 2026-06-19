@@ -188,7 +188,7 @@
       "ariaModal": true
     }
   },
-  "Toast": {
+    "Toast": {
     "variants": ["info", "success", "warning", "error"],
     "states": ["visible", "dismissed"],
     "tokens": {
@@ -196,13 +196,23 @@
       "success": { "background": "success", "text": "textInverse" },
       "warning": { "background": "warning", "text": "textInverse" },
       "error": { "background": "error", "text": "textInverse" }
+      },
+      "accessibility": {
+        "noCriticalAutoDismiss": true,
+        "role": {
+          "default": "status",
+          "error": "alert"
+        },
+        "ariaLive": {
+          "default": "polite",
+          "error": "assertive"
+        },
+        "dismissAfter": {
+          "default": "3200ms",
+          "error": "8000ms"
+        }
+      }
     },
-    "accessibility": {
-      "noCriticalAutoDismiss": true,
-      "role": "alert",
-      "ariaLive": "polite"
-    }
-  },
   "Tabs": {
     "variants": ["default"],
     "states": ["default", "active", "focus"],

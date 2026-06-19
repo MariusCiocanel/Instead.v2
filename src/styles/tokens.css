@@ -9,8 +9,8 @@
   --color-parchment: #FAF9F6;
   --color-ink-900: #1E1E1E;
   --color-ink-700: #444444;
-  --color-ink-500: #6B6B6B;
-  --color-focus: #2D6CDF;
+  --color-ink-500: #595959;
+  --color-focus: #0054B8;
 
   --color-success: #2E6A44;
   --color-warning: #8A5B00;
@@ -23,7 +23,7 @@
   --bg: var(--color-parchment);
   --surface: var(--color-pear-100);
   --surface-elevated: #FFFFFF;
-  --border: var(--color-moss-300);
+  --border: #7D8978;
   --border-strong: var(--color-leaf-500);
 
   --text-primary: var(--color-ink-900);
@@ -59,6 +59,7 @@
 
   --disabled: #CFCFCF;
   --focus-ring: var(--color-focus);
+  --focus-halo: #FFFFFF;
 }
 
 /* ─── Dark Theme ───────────────────────────────────────────────
@@ -70,18 +71,17 @@
   --bg: #141614;
   --surface: #1E221E;
   --surface-elevated: #252A25;
-  --border: #3A423A;
+  --border: #AEB8AA;
   --border-strong: var(--color-leaf-500);
 
   --text-primary: #F7F6F2;
   --text-secondary: #D6D9D2;
-  --text-muted: #9DA89A;
+  --text-muted: #CBD1C8;
   --text-inverse: #1E1E1E;
 
-  /* Darker fill so WHITE button text passes APCA (white on this ≈ Lc 77) */
-  --primary: #54824F;
-  --primary-hover: #5E9058;
-  --primary-active: #6A9C64;
+  --primary: #4A7446;
+  --primary-hover: #436B40;
+  --primary-active: #3C623A;
   --secondary: #8FA38C;
   /* Light green for green-as-text on dark surfaces */
   --accent: #A9CDA4;
@@ -106,7 +106,8 @@
   --semantic-error-border: #5C2A2A;
 
   --disabled: #4A4E4A;
-  --focus-ring: #5B91F4;
+  --focus-ring: #FFFFFF;
+  --focus-halo: #141614;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -114,17 +115,17 @@
     --bg: #141614;
     --surface: #1E221E;
     --surface-elevated: #252A25;
-    --border: #3A423A;
+    --border: #AEB8AA;
     --border-strong: var(--color-leaf-500);
 
     --text-primary: #F7F6F2;
     --text-secondary: #D6D9D2;
-    --text-muted: #9DA89A;
+    --text-muted: #CBD1C8;
     --text-inverse: #1E1E1E;
 
-    --primary: #54824F;
-    --primary-hover: #5E9058;
-    --primary-active: #6A9C64;
+    --primary: #4A7446;
+    --primary-hover: #436B40;
+    --primary-active: #3C623A;
     --secondary: #8FA38C;
     --accent: #A9CDA4;
 
@@ -148,7 +149,8 @@
     --semantic-error-border: #5C2A2A;
 
     --disabled: #4A4E4A;
-    --focus-ring: #5B91F4;
+    --focus-ring: #FFFFFF;
+    --focus-halo: #141614;
   }
 }
 
@@ -227,6 +229,7 @@
 :focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--focus-halo);
 }
 
 /* ─── Reduced Motion ─── */

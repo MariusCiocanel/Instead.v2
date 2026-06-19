@@ -83,7 +83,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
   padding: 3px; margin-bottom: 20px; gap: 0;
 }
 .auth-mode-btn {
-  flex: 1; padding: 8px; border: none; border-radius: 8px;
+  flex: 1; min-height: 44px; padding: 8px; border: none; border-radius: 8px;
   font-family: var(--font-body); font-size: 14px; font-weight: 600;
   cursor: pointer; background: transparent; color: var(--text-secondary);
   transition: all 0.15s;
@@ -104,6 +104,8 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
   text-transform: uppercase; color: var(--text-muted); margin: 12px 0;
 }
 .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--surface); }
+.skip-link { position: absolute; left: 16px; top: 8px; z-index: 500; transform: translateY(-140%); background: var(--surface-elevated); color: var(--text-primary); border: 2px solid var(--focus-ring); border-radius: 10px; padding: 10px 14px; font-weight: 700; text-decoration: none; }
+.skip-link:focus-visible { transform: translateY(0); }
 
 /* ── NEW: USER MENU STYLES ── */
 .user-info-row {
@@ -145,7 +147,8 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 .list-heading { font-family: var(--font-head); font-size: 22px; font-weight: 700; color: var(--text-primary); }
 .list-stack { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
 .list-row { background: var(--surface-elevated); border: 1.5px solid var(--surface); border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: var(--shadow); }
-.list-row-main { min-width: 0; flex: 1; cursor: pointer; }
+.list-row-main { min-width: 0; flex: 1; }
+.list-row-button { min-height: 44px; border: 0; background: transparent; color: inherit; cursor: pointer; text-align: left; font: inherit; padding: 0; border-radius: 8px; }
 .list-title { font-size: 15px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .list-meta { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
 .list-badge { display: inline-flex; align-items: center; border-radius: 14px; padding: 3px 8px; background: var(--surface); color: var(--text-secondary); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -160,9 +163,9 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 .pending-share { border-color: var(--warning-border); background: var(--warning-bg); }
 .member-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--surface); }
 .member-row code { flex: 1; min-width: 0; font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; }
-.member-row select { max-width: 110px; padding: 7px; border: 1.5px solid var(--surface); border-radius: 8px; background: var(--bg); font-family: var(--font-body); }
+.member-row select { min-height: 44px; max-width: 110px; padding: 7px; border: 1.5px solid var(--surface); border-radius: 8px; background: var(--bg); font-family: var(--font-body); }
 .copy-row { display: flex; gap: 8px; margin: 10px 0 14px; }
-.copy-row input { flex: 1; min-width: 0; padding: 10px 12px; border: 1.5px solid var(--surface); border-radius: 10px; background: var(--bg); color: var(--text-secondary); font-family: var(--font-body); font-size: 13px; }
+.copy-row input { flex: 1; min-width: 0; min-height: 48px; padding: 10px 12px; border: 1.5px solid var(--surface); border-radius: 10px; background: var(--bg); color: var(--text-secondary); font-family: var(--font-body); font-size: 13px; }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; }
 .toggle-copy { flex: 1; min-width: 0; }
 .toggle-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
@@ -213,7 +216,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 
 /* ── SHOW DONE ── */
 .show-done-wrap { display: flex; justify-content: flex-end; margin-bottom: 4px; }
-.show-done-btn { background: none; border: none; font-family: var(--font-body); font-size: 12px; color: var(--text-secondary); font-weight: 600; cursor: pointer; padding: 4px 8px; }
+.show-done-btn { min-height: 44px; background: none; border: none; font-family: var(--font-body); font-size: 12px; color: var(--text-secondary); font-weight: 600; cursor: pointer; padding: 4px 8px; }
 .section-divider { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); padding: 10px 0 6px; display: flex; align-items: center; gap: 10px; }
 .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--surface); }
 
@@ -292,14 +295,30 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
   .fab { max-width: calc(100vw - 40px); }
 }
 @media (min-width: 480px) { .main { padding: 20px 20px 100px; } .app-title { font-size: 32px; } }
+@media (forced-colors: active) {
+  .card,
+  .list-row,
+  .sheet-card,
+  .form-group input,
+  .form-group select,
+  .form-group textarea,
+  .btn-done,
+  .btn-edit,
+  .btn-restore,
+  .list-mini-btn {
+    border: 1px solid CanvasText;
+  }
+}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<a class="skip-link" href="#nav">Skip to navigation</a>
 
 <!-- HEADER -->
 <header class="app-header">
   <div class="header-left">
-    <span class="app-title">Instead</span>
+    <h1 class="app-title">Instead</h1>
     <span class="app-subtitle" id="headerCount"></span>
   </div>
   <div class="header-actions">
@@ -324,10 +343,10 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 </header>
 
 <!-- TABS -->
-<div class="tabs-wrap"><div class="tabs" id="tabs"></div></div>
+<nav class="tabs-wrap" id="nav" tabindex="-1" aria-label="Main navigation"><div class="tabs" id="tabs" role="tablist" aria-label="Bookmark categories"></div></nav>
 
 <!-- MAIN -->
-<main class="main" id="main"></main>
+<main class="main" id="main" role="tabpanel" tabindex="-1"></main>
 
 <!-- FAB -->
 <button class="fab" onclick="openSurprise()"><span>✨</span> Surprise me</button>
@@ -337,7 +356,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 
 
 <!-- ── SURPRISE SHEET ── -->
-<div class="sheet" id="surpriseSheet">
+<div class="sheet" id="surpriseSheet" role="dialog" aria-modal="true" aria-labelledby="sTitle" aria-hidden="true">
   <div class="sheet-card">
     <div class="sheet-label">✨ Instead of scrolling...</div>
     <span class="sheet-emoji" id="sEmoji"></span>
@@ -352,7 +371,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 </div>
 
 <!-- ── DONE PROMPT SHEET ── -->
-<div class="sheet" id="doneSheet">
+<div class="sheet" id="doneSheet" role="dialog" aria-modal="true" aria-labelledby="doneTitle" aria-hidden="true">
   <div class="sheet-card">
     <div class="sheet-label">✓ You did it!</div>
     <span class="sheet-emoji" id="doneEmoji"></span>
@@ -367,9 +386,9 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 </div>
 
 <!-- ── ADD ITEM SHEET ── -->
-<div class="sheet" id="addSheet">
+<div class="sheet" id="addSheet" role="dialog" aria-modal="true" aria-labelledby="addSheetHeading" aria-hidden="true">
   <div class="sheet-card">
-    <div class="form-h2">Add to Instead</div>
+    <div class="form-h2" id="addSheetHeading">Add to Instead</div>
     <div class="form-group"><label for="addTitle">Title</label><input type="text" id="addTitle" placeholder="What is it?" /></div>
     <div class="form-group"><label for="addSub">Description</label><textarea id="addSub" placeholder="Any context? (optional)"></textarea></div>
     <div class="form-group">
@@ -396,7 +415,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 </div>
 
 <!-- ── EDIT ITEM SHEET ── -->
-<div class="sheet" id="editSheet">
+<div class="sheet" id="editSheet" role="dialog" aria-modal="true" aria-labelledby="editHeading" aria-hidden="true">
   <div class="sheet-card">
     <div class="form-h2" id="editHeading">Edit item</div>
     <div class="form-group"><label for="editTitle">Title</label><input type="text" id="editTitle" /></div>
@@ -425,7 +444,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 </div>
 
 <!-- ── NEW: AUTH SHEET (sign in / sign up) ── -->
-<div class="sheet" id="authSheet">
+<div class="sheet" id="authSheet" role="dialog" aria-modal="true" aria-labelledby="authHeading" aria-hidden="true">
   <div class="sheet-card">
     <div class="auth-mode-tabs">
       <button class="auth-mode-btn active" id="signinTab" onclick="setAuthMode('signin')">Sign in</button>
@@ -433,7 +452,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
     </div>
 
     <div class="form-h2" id="authHeading">Welcome back</div>
-    <div class="auth-message" id="authMessage"></div>
+    <div class="auth-message" id="authMessage" role="alert" aria-live="assertive"></div>
 
     <div class="form-group" id="displayNameGroup" style="display:none">
       <label for="authDisplayName">Your name (optional)</label>
@@ -461,8 +480,9 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 </div>
 
 <!-- ── NEW: USER MENU SHEET (shown when already signed in) ── -->
-<div class="sheet" id="userSheet">
+<div class="sheet" id="userSheet" role="dialog" aria-modal="true" aria-labelledby="userSheetHeading" aria-hidden="true">
   <div class="sheet-card">
+    <div class="form-h2" id="userSheetHeading">Account</div>
     <div class="user-info-row">
       <div class="user-avatar-lg" id="userAvatarLg"></div>
       <div>
@@ -489,7 +509,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 </div>
 
 <!-- ── LIST MANAGER SHEET ── -->
-<div class="sheet" id="listSheet">
+<div class="sheet" id="listSheet" role="dialog" aria-modal="true" aria-labelledby="listSheetHeading" aria-hidden="true">
   <div class="sheet-card">
     <div class="form-h2" id="listSheetHeading">New list</div>
     <div class="form-group">
@@ -518,9 +538,9 @@ body { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidd
 </div>
 
 <!-- ── ADD TO LIST SHEET ── -->
-<div class="sheet" id="addToListSheet">
+<div class="sheet" id="addToListSheet" role="dialog" aria-modal="true" aria-labelledby="addToListHeading" aria-hidden="true">
   <div class="sheet-card">
-    <div class="form-h2">Add to list</div>
+    <div class="form-h2" id="addToListHeading">Add to list</div>
     <div class="sheet-sub" id="addToListItemTitle"></div>
     <div class="list-stack" id="addToListOptions"></div>
     <div class="sheet-actions">
@@ -1682,14 +1702,17 @@ function renderTabs() {
       const pool = c.id === 'all' ? active : active.filter(i => i.cat === c.id);
       count = pool.length;
     }
-    return `<button class="tab${activeCat===c.id?' active':''}${c.isArchive?' archive-tab':''}" onclick="setTab('${c.id}')">
+    const selected = activeCat === c.id;
+    return `<button id="tab-${c.id}" class="tab${selected?' active':''}${c.isArchive?' archive-tab':''}" type="button" role="tab" aria-selected="${selected}" aria-controls="main" tabindex="${selected ? '0' : '-1'}" onclick="setTab('${c.id}')" onkeydown="handleTabKey(event, '${c.id}')">
       ${c.emoji} ${c.label}
       ${count > 0 ? `<span class="tab-count">${count}</span>` : ''}
     </button>`;
   }).join('');
+  const currentTab = document.getElementById(`tab-${activeCat}`);
+  if (currentTab) document.getElementById('main').setAttribute('aria-labelledby', currentTab.id);
 }
 
-function setTab(id) {
+function setTab(id, focusTab = false) {
   activeCat = id;
   showDone  = false;
   if (id !== 'lists') selectedListId = null;
@@ -1697,6 +1720,21 @@ function setTab(id) {
   if (id !== 'lists') clearListHash();
   renderTabs();
   renderMain();
+  if (focusTab) document.getElementById(`tab-${id}`)?.focus();
+}
+
+function handleTabKey(event, id) {
+  const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+  if (!keys.includes(event.key)) return;
+  event.preventDefault();
+  const tabs = CATS.filter(c => !c.isLists || isCloud());
+  const current = tabs.findIndex(c => c.id === id);
+  let next = current;
+  if (event.key === 'ArrowLeft') next = current <= 0 ? tabs.length - 1 : current - 1;
+  if (event.key === 'ArrowRight') next = current >= tabs.length - 1 ? 0 : current + 1;
+  if (event.key === 'Home') next = 0;
+  if (event.key === 'End') next = tabs.length - 1;
+  setTab(tabs[next].id, true);
 }
 
 
@@ -1781,10 +1819,10 @@ function renderLists(main) {
   cloudLists.forEach(list => {
     const count = getItemsForList(list.id).length;
     html += `<div class="list-row">
-      <div class="list-row-main" onclick="openListView('${list.id}')">
+      <button class="list-row-main list-row-button" type="button" onclick="openListView('${list.id}')">
         <div class="list-title">${esc(listTitle(list))}</div>
         <div class="list-meta">${count} item${count !== 1 ? 's' : ''}</div>
-      </div>
+      </button>
       ${listBadgeHTML(list)}
       ${isListOwner(list) ? `<button class="list-mini-btn" onclick="openListSheet('${list.id}')">Manage</button>` : ''}
     </div>`;
@@ -2143,12 +2181,15 @@ let toastTimer = null;
 function showToast(msg, type = '') {
   const el = document.getElementById('toast');
   if (!el) return;
+  const isError = type === 'error';
   el.textContent = msg;
+  el.setAttribute('role', isError ? 'alert' : 'status');
+  el.setAttribute('aria-live', isError ? 'assertive' : 'polite');
   el.className = 'toast show' + (type ? ' ' + type : '');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
     el.className = 'toast' + (type ? ' ' + type : '');
-  }, 3200);
+  }, isError ? 8000 : 3200);
 }
 
 function showLoading() {
@@ -2162,15 +2203,44 @@ function showLoading() {
 // ══════════════════════════════════════════════════════════
 // SHEET HELPERS
 // ══════════════════════════════════════════════════════════
-function openSheet(id) {
-  document.querySelectorAll('.sheet.open').forEach(el => el.classList.remove('open'));
-  document.getElementById(id).classList.add('open');
-  document.body.style.overflow = 'hidden';
+let sheetTrigger = null;
+const focusableSelector = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])'
+].join(',');
+
+function sheetFocusables(sheet) {
+  return [...sheet.querySelectorAll(focusableSelector)]
+    .filter(el => el.offsetParent !== null || el === document.activeElement);
 }
-function closeSheet(id) {
+
+function openSheet(id) {
+  const current = document.activeElement;
+  if (current && !current.closest('.sheet')) sheetTrigger = current;
+  document.querySelectorAll('.sheet.open').forEach(el => closeSheet(el.id, false));
+  const sheet = document.getElementById(id);
+  sheet.classList.add('open');
+  sheet.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => {
+    const [first] = sheetFocusables(sheet);
+    if (first) first.focus();
+  });
+}
+function closeSheet(id, restoreFocus = true) {
   const el = document.getElementById(id);
-  if (el) el.classList.remove('open');
-  document.body.style.overflow = '';
+  if (!el) return;
+  el.classList.remove('open');
+  el.setAttribute('aria-hidden', 'true');
+  if (!document.querySelector('.sheet.open')) document.body.style.overflow = '';
+  if (restoreFocus && sheetTrigger && document.contains(sheetTrigger)) {
+    sheetTrigger.focus();
+    sheetTrigger = null;
+  }
 }
 
 // Close on backdrop click
@@ -2179,14 +2249,33 @@ document.querySelectorAll('.sheet').forEach(el => {
 });
 
 document.addEventListener('keydown', e => {
+  const openSheetEl = document.querySelector('.sheet.open');
+  if (openSheetEl && e.key === 'Tab') {
+    const focusables = sheetFocusables(openSheetEl);
+    if (!focusables.length) { e.preventDefault(); return; }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    } else if (!openSheetEl.contains(document.activeElement)) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
   if (e.key === 'Escape') {
     document.querySelectorAll('.sheet.open').forEach(el => closeSheet(el.id));
   }
   if (e.key === 'Enter') {
-    if (document.getElementById('addSheet').classList.contains('open')  && document.activeElement.tagName !== 'TEXTAREA') submitAdd();
-    if (document.getElementById('editSheet').classList.contains('open') && document.activeElement.tagName !== 'TEXTAREA') submitEdit();
-    if (document.getElementById('authSheet').classList.contains('open') && document.activeElement.tagName !== 'TEXTAREA') submitAuth();
-    if (document.getElementById('listSheet').classList.contains('open') && document.activeElement.tagName !== 'TEXTAREA') saveListFromSheet();
+    const tag = document.activeElement.tagName;
+    if (['TEXTAREA', 'BUTTON', 'A', 'SELECT'].includes(tag)) return;
+    if (document.getElementById('addSheet').classList.contains('open')) submitAdd();
+    if (document.getElementById('editSheet').classList.contains('open')) submitEdit();
+    if (document.getElementById('authSheet').classList.contains('open')) submitAuth();
+    if (document.getElementById('listSheet').classList.contains('open')) saveListFromSheet();
   }
 });
 
