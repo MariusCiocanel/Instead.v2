@@ -2246,21 +2246,55 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 // ══════════════════════════════════════════════════════════
 // BACKUP DATA
 // ══════════════════════════════════════════════════════════
-function backupData() {
-  const backup = {
-    exportedAt: new Date().toISOString(),
-    version: 2,
-    customItems, overrides, archivedItems,
-    deletedIds: [...deletedIds],
-  };
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  const date = new Date().toISOString().slice(0, 10);
-  a.href     = url;
-  a.download = `instead-backup-${date}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+async function backupData() {
+  try {
+    let backup, kind;
+    if (isCloud()) {
+      // Signed in: the cloud is the source of truth, not the in-memory guest
+      // structures. Pull a fresh, complete snapshot from Supabase.
+      const [items, listsRes, listItemsRes, sharesRes] = await Promise.all([
+        fetchItems(),
+        db.from('lists').select('*'),
+        db.from('list_items').select('*'),
+        db.from('list_shares').select('*'),
+      ]);
+      const err = listsRes.error || listItemsRes.error || sharesRes.error;
+      if (err) throw err;
+      backup = {
+        exportedAt: new Date().toISOString(),
+        version: 3,
+        source: 'cloud',
+        account: currentUser.email,
+        items,
+        lists: listsRes.data || [],
+        listItems: listItemsRes.data || [],
+        listShares: sharesRes.data || [],
+      };
+      kind = 'cloud';
+    } else {
+      // Guest: export the on-device localStorage data.
+      backup = {
+        exportedAt: new Date().toISOString(),
+        version: 2,
+        source: 'local',
+        customItems, overrides, archivedItems,
+        deletedIds: [...deletedIds],
+      };
+      kind = 'local';
+    }
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+    a.href     = url;
+    a.download = `instead-backup-${kind}-${date}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('Backup failed:', err);
+    showToast('Couldn’t build the backup — try again.', 'error');
+  }
 }
 
 
