@@ -75,8 +75,11 @@ Corrected in `supabase/migrations/20260618_fix_list_shares_permission_constraint
 
 ## D. Phase 5 — Exact-time purge (optional)
 
-12. **Scheduled server-side purge** — Supabase scheduled Edge Function / `pg_cron` that
-    hard-deletes `deleted` rows past 30 days, replacing the client-side login sweep.
+12. ~~**Scheduled server-side purge**~~ — ✅ implemented in
+    `supabase/migrations/20260618_phase5_scheduled_purge.sql`: a daily `pg_cron` job
+    (`purge_old_deleted_items()`) hard-deletes every user's `deleted` rows past 30 days,
+    independent of logins. The client-side login sweep is kept as a fast-path backup.
+    _Apply the migration live + confirm the job runs (see supabase/README.md checks)._
 
 ---
 
